@@ -1,0 +1,2 @@
+export type { CarteraId as CuentaId, MetaCarteraId as MetaCuentaId, MovimientoCarteraId as MovimientoCuentaId, TipoCartera as TipoCuenta, Moneda, ObjetivoCartera as ObjetivoCuenta, TipoMovimientoCartera as TipoMovimientoCuenta, Cartera as Cuenta, MetaCartera as MetaCuenta, MovimientoCartera as MovimientoCuenta, ResumenCarteras as ResumenCuentas } from "./cartera";
+export { esLiquida, MONEDAS_POR_TIPO } from "./cartera";

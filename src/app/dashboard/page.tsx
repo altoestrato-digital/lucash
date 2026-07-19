@@ -1,0 +1,110 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCarteras } from "@/hooks/useCarteras";
+import { usePresupuesto } from "@/hooks/usePresupuesto";
+import { usePerfil } from "@/hooks/usePerfil";
+import { bs, usd, type Money } from "@/lib/money";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useTransacciones } from "@/hooks/useHistorial";
+import { esLiquida } from "@/types/cartera";
+import { convertirAUSD, convertirABs } from "@/lib/conversion";
+import { toIso } from "@/lib/dates";
+import type { Transaccion } from "@/types/transaccion";
+import DashboardHero from "@/components/dashboard/DashboardHero";
+import DashboardKpis from "@/components/dashboard/DashboardKpis";
+import SpendingChart from "@/components/dashboard/SpendingChart";
+import BudgetDonut from "@/components/dashboard/BudgetDonut";
+import RecentTransactions from "@/components/dashboard/RecentTransactions";
+import QuickTest from "@/components/dashboard/QuickTest";
+import IncomeExpenseChart from "@/components/dashboard/IncomeExpenseChart";
+import TransaccionDrawer from "@/components/historial/TransaccionDrawer";
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const { carteras } = useCarteras();
+  const { presupuesto } = usePresupuesto();
+  const { perfil } = usePerfil();
+  const transacciones = useTransacciones();
+
+  const dashboardData = useDashboardData(carteras, presupuesto, transacciones);
+  const [drawerTx, setDrawerTx] = useState<Transaccion | null>(null);
+
+  const carterasNoLiquidas = carteras.filter((c) => c.activo && !esLiquida(c));
+  const activas = carteras.filter((c) => c.activo);
+  const hoy = toIso(new Date());
+  let totalBsNum = 0;
+  let totalUsdNum = 0;
+  for (const c of activas) {
+    if (c.moneda === "Bs") totalBsNum += c.saldo;
+    else if (c.moneda === "USD" || c.moneda === "USDT") totalUsdNum += c.saldo;
+  }
+  const totalBsMoney = bs(totalBsNum);
+  const totalUsdMoney = usd(totalUsdNum);
+  const totalEnBs = Number(totalBsMoney) + Number(convertirABs(totalUsdMoney, hoy));
+  const totalEnUsd = Number(totalUsdMoney) + Number(convertirAUSD(totalBsMoney, "Bs", hoy));
+
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardHero nombre={perfil.nombre} />
+
+      <div className="relative -mt-8 z-10">
+        <DashboardKpis
+          disponible={dashboardData.disponible}
+          presupuestoPct={dashboardData.presupuestoCubiertoPct}
+          gastadoMes={dashboardData.gastadoMesBs}
+          totalBs={totalEnBs as Money}
+          totalUsd={totalEnUsd as Money}
+          onDisponibleClick={() => router.push("/carteras")}
+          onPresupuestoClick={() => router.push("/presupuestos")}
+          onGastadoClick={() => router.push("/historial")}
+        />
+      </div>
+
+      <div className="px-4 mt-6 space-y-6 lg:grid lg:grid-cols-5 lg:gap-6 lg:px-6 lg:mt-8">
+        <div className="lg:col-span-3 space-y-6">
+          <SpendingChart
+            gastosPorSub={dashboardData.gastosPorSub}
+          />
+          {dashboardData.gastosPorSub.length > 0 && (
+            <BudgetDonut gastosPorSub={dashboardData.gastosPorSub} />
+          )}
+        </div>
+
+        <div className="lg:col-span-2 space-y-6">
+          <RecentTransactions
+            transacciones={dashboardData.ultimasTransacciones}
+            onTxClick={setDrawerTx}
+            onVerTodos={() => router.push("/historial")}
+          />
+          <QuickTest
+            disponible={dashboardData.disponible}
+            total={{ bs: totalEnBs as Money, usd: totalEnUsd as Money }}
+            cuentasNoLiquidas={carterasNoLiquidas.map((c) => {
+              const saldoEnBs = c.moneda === "Bs" ? c.saldo : Number(convertirABs(usd(c.saldo), hoy));
+              const saldoEnUsd = c.moneda === "USD" || c.moneda === "USDT" ? c.saldo : Number(convertirAUSD(bs(c.saldo), "Bs", hoy));
+              return {
+                id: c.id,
+                nombre: c.nombre,
+                tipo: c.tipo,
+                saldo: perfil.preferencias.moneda === "USD" ? saldoEnUsd : saldoEnBs,
+                moneda: perfil.preferencias.moneda === "USD" ? "USD" : "Bs",
+              };
+            })}
+          />
+        </div>
+      </div>
+
+      <div className="px-4 mt-6 lg:px-6">
+        <IncomeExpenseChart transacciones={transacciones} presupuesto={presupuesto} />
+      </div>
+
+      <TransaccionDrawer
+        open={!!drawerTx}
+        transaccion={drawerTx}
+        onClose={() => setDrawerTx(null)}
+      />
+    </div>
+  );
+}
