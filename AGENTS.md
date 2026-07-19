@@ -80,3 +80,34 @@ The project spec defines these App Router pages; create them as `src/app/<route>
 - Tailwind v4 syntax (`@import "tailwindcss";` + `@theme inline {}` in `src/app/globals.css`) — do not reintroduce a v3 `tailwind.config.js`.
 - Geist font is loaded via `next/font/google` in `src/app/layout.tsx`; reuse the existing `--font-geist-sans` / `--font-geist-mono` CSS vars instead of importing fonts ad-hoc.
 - All data is local — persistence goes through the SQLite layer in `src/lib/db/`; no network calls to a real backend.
+
+## Obsidian Workflow
+
+**Vault path:** `/home/hodor/Documents/projects-obsidian/projects/lucash/`
+
+### Vault structure
+```
+00 - Resumen Proyecto.md    ← Estado actual del proyecto, stack, último commit
+01 - Modulos/               ← Una nota por módulo (tablas, libs, relaciones, spec)
+02 - Tablas SQL/            ← DDL de cada tabla extraído de schema.ts
+03 - Historial/             ← Resúmenes de sesión: <titulo>-<YYYY-MM-DD>.md
+```
+
+### Flujo de inicio de sesión
+1. Leer `00 - Resumen Proyecto.md` para entender el estado actual.
+2. Leer el último archivo en `03 - Historial/` para saber qué se hizo la sesión anterior.
+3. Si hay pendientes, continuar desde ahí.
+
+### Flujo post-ejecución (después de cada plan completado)
+1. Ejecutar `pnpm lint` y `pnpm build` para verificar.
+2. Generar commit con mensaje descriptivo.
+3. Actualizar en Obsidian:
+   - `00 - Resumen Proyecto.md` — último commit, estado.
+   - `01 - Modulos/<modulos afectados>.md` — si cambió la estructura del módulo.
+   - `02 - Tablas SQL/*.sql` — si cambió el schema.
+   - `03 - Historial/<titulo>-<YYYY-MM-DD>.md` — crear entrada con archivos modificados + commit.
+
+### Convenciones del vault
+- **Title Case** para nombres de archivo.
+- Usar `[[wikilinks]]` para referencias entre notas.
+- No crear subcarpetas innecesarias dentro de cada carpeta.
