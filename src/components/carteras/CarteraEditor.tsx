@@ -63,6 +63,23 @@ export default function CarteraEditor({ open, cartera, onSave, onClose }: Carter
       activo,
       espacioTrabajoId: cartera?.espacioTrabajoId ?? preferencias.espacioTrabajoId,
     });
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setNombre("");
+    setTipo("efectivo");
+    setMoneda("Bs");
+    setSaldo("");
+    setObjetivo("cubrir-presupuesto");
+    setColor(COLORS[0]);
+    setActivo(true);
+    setErrors({});
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onClose();
   };
 
   if (!open) return null;
@@ -209,7 +226,7 @@ export default function CarteraEditor({ open, cartera, onSave, onClose }: Carter
         <div className="mt-6 flex gap-3">
           <button
             className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            onClick={onClose}
+            onClick={handleCancel}
           >
             Cancelar
           </button>
