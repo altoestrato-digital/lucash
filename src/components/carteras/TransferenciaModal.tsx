@@ -18,7 +18,7 @@ interface TransferenciaData {
 
 interface TransferenciaModalProps {
   open: boolean;
-  carteraOrigen: Cartera;
+  carteraOrigen?: Cartera;
   carterasDestino: Cartera[];
   onConfirm: (data: TransferenciaData) => void;
   onClose: () => void;
@@ -40,7 +40,7 @@ export default function TransferenciaModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const carteraDestino = carterasDestino.find((c) => c.id === carteraDestinoId);
-  const esMismaMoneda = carteraDestino?.moneda === carteraOrigen.moneda;
+  const esMismaMoneda = carteraDestino?.moneda === carteraOrigen?.moneda;
 
   const montoOrigen = parseFloat(montoOrigenInput) || 0;
   const montoDestino = parseFloat(montoDestinoInput) || 0;
@@ -65,7 +65,7 @@ export default function TransferenciaModal({
     return ((tasaResultante - tasaOficial) / tasaOficial) * 100;
   }, [tasaOficial, tasaResultante]);
 
-  if (!open) return null;
+  if (!open || !carteraOrigen) return null;
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
