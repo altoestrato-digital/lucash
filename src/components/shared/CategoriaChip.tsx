@@ -1,6 +1,6 @@
 "use client";
 
-export function SubpresupuestoChip({ nombre, color, activo = true }: { nombre: string; color: string; activo?: boolean }) {
+export function CategoriaChip({ nombre, color, activo = true }: { nombre: string; color: string; activo?: boolean }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${

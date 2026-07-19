@@ -11,21 +11,21 @@ import { usePreferencias } from "@/hooks/usePreferencias";
 import { toIso } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { useUIStore } from "@/stores/ui";
-import type { Subpresupuesto } from "@/types/presupuesto";
+import type { Categoria } from "@/types/presupuesto";
 import PresupuestoHeader from "@/components/presupuestos/PresupuestoHeader";
 import PresupuestosTabs from "@/components/presupuestos/PresupuestosTabs";
 import PresupuestoResumen from "@/components/presupuestos/PresupuestoResumen";
 import PresupuestoEditor from "@/components/presupuestos/PresupuestoEditor";
-import SubpresupuestoEditor from "@/components/presupuestos/SubpresupuestoEditor";
+import CategoriaEditor from "@/components/presupuestos/CategoriaEditor";
 import SnapshotBanner from "@/components/presupuestos/SnapshotBanner";
 
 export default function PresupuestosPage() {
   const {
     presupuesto,
     updatePresupuesto,
-    addSubpresupuesto,
-    updateSubpresupuesto,
-    softDeleteSubpresupuesto,
+    addCategoria,
+    updateCategoria,
+    softDeleteCategoria,
     cerrarPeriodo,
   } = usePresupuesto();
 
@@ -33,7 +33,7 @@ export default function PresupuestosPage() {
 
   const [tab, setTab] = useState("Resumen");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingSub, setEditingSub] = useState<Subpresupuesto | undefined>(undefined);
+  const [editingCat, setEditingCat] = useState<Categoria | undefined>(undefined);
 
   const transacciones = useTransacciones();
   const { carteras } = useCarteras();
@@ -53,32 +53,32 @@ export default function PresupuestosPage() {
     pushToast({ tone: "success", message: "Presupuesto actualizado" });
   }, [updatePresupuesto, pushToast]);
 
-  const handleAddSub = useCallback(() => {
-    setEditingSub(undefined);
+  const handleAddCat = useCallback(() => {
+    setEditingCat(undefined);
     setModalOpen(true);
   }, []);
 
-  const handleEditSub = useCallback((sub: Subpresupuesto) => {
-    setEditingSub(sub);
+  const handleEditCat = useCallback((cat: Categoria) => {
+    setEditingCat(cat);
     setModalOpen(true);
   }, []);
 
-  type SubDraft = Omit<Subpresupuesto, "id" | "activo">;
-  const handleSaveSub = useCallback((data: SubDraft) => {
-    if (editingSub) {
-      updateSubpresupuesto(editingSub.id, data);
-      pushToast({ tone: "success", message: "Sub-presupuesto actualizado" });
+  type CatDraft = Omit<Categoria, "id" | "activo" | "presupuestoId">;
+  const handleSaveCat = useCallback((data: CatDraft) => {
+    if (editingCat) {
+      updateCategoria(editingCat.id, data);
+      pushToast({ tone: "success", message: "Categoria actualizada" });
     } else if (presupuesto) {
-      addSubpresupuesto({ ...data, presupuestoId: presupuesto.id } as Omit<Subpresupuesto, "id"> & { presupuestoId: string });
-      pushToast({ tone: "success", message: "Sub-presupuesto creado" });
+      addCategoria({ ...data, presupuestoId: presupuesto.id });
+      pushToast({ tone: "success", message: "Categoria creada" });
     }
     setModalOpen(false);
-    setEditingSub(undefined);
-  }, [editingSub, presupuesto, updateSubpresupuesto, addSubpresupuesto, pushToast]);
+    setEditingCat(undefined);
+  }, [editingCat, presupuesto, updateCategoria, addCategoria, pushToast]);
 
-  const handleDeleteSub = useCallback((id: string) => {
-    softDeleteSubpresupuesto(id);
-  }, [softDeleteSubpresupuesto]);
+  const handleDeleteCat = useCallback((id: string) => {
+    softDeleteCategoria(id);
+  }, [softDeleteCategoria]);
 
   const handleEmpezarNuevo = useCallback(() => {
     cerrarPeriodo();
@@ -103,7 +103,7 @@ export default function PresupuestosPage() {
               gastoMaximoEsperadoMoneda: "Bs",
               fechaInicio: inicio,
               fechaFin: fin,
-              subpresupuestos: [],
+              categorias: [],
             });
           }}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
@@ -144,20 +144,20 @@ export default function PresupuestosPage() {
           <PresupuestoEditor
             presupuesto={presupuesto}
             onSave={handleSave}
-            onAddSub={handleAddSub}
-            onEditSub={handleEditSub}
-            onDeleteSub={handleDeleteSub}
+            onAddCat={handleAddCat}
+            onEditCat={handleEditCat}
+            onDeleteCat={handleDeleteCat}
           />
         )}
 
-      <SubpresupuestoEditor
+      <CategoriaEditor
         open={modalOpen}
-        sub={editingSub}
-        presupuestoSubs={presupuesto?.subpresupuestos ?? []}
+        cat={editingCat}
+        presupuestoCats={presupuesto?.categorias ?? []}
         gastoMaximoEsperado={Number(presupuesto?.gastoMaximoEsperado ?? 0)}
         gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
-        onSave={handleSaveSub}
-        onClose={() => { setModalOpen(false); setEditingSub(undefined); }}
+        onSave={handleSaveCat}
+        onClose={() => { setModalOpen(false); setEditingCat(undefined); }}
       />
       </div>
     </div>

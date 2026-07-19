@@ -65,10 +65,10 @@ export default function DashboardPage() {
       <div className="px-4 mt-6 space-y-6 lg:grid lg:grid-cols-5 lg:gap-6 lg:px-6 lg:mt-8">
         <div className="lg:col-span-3 space-y-6">
           <SpendingChart
-            gastosPorSub={dashboardData.gastosPorSub}
+            gastosPorCategoria={dashboardData.gastosPorCat}
           />
-          {dashboardData.gastosPorSub.length > 0 && (
-            <BudgetDonut gastosPorSub={dashboardData.gastosPorSub} />
+          {dashboardData.gastosPorCat.length > 0 && (
+            <BudgetDonut gastosPorCategoria={dashboardData.gastosPorCat} />
           )}
         </div>
 
@@ -81,7 +81,7 @@ export default function DashboardPage() {
           <QuickTest
             disponible={dashboardData.disponible}
             total={{ bs: totalEnBs as Money, usd: totalEnUsd as Money }}
-            cuentasNoLiquidas={carterasNoLiquidas.map((c) => {
+            carterasNoLiquidas={carterasNoLiquidas.map((c) => {
               const saldoEnBs = c.moneda === "Bs" ? c.saldo : Number(convertirABs(usd(c.saldo), hoy));
               const saldoEnUsd = c.moneda === "USD" || c.moneda === "USDT" ? c.saldo : Number(convertirAUSD(bs(c.saldo), "Bs", hoy));
               return {

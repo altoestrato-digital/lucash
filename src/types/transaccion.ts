@@ -3,7 +3,8 @@ import type { ISODateTime } from "@/lib/dates";
 import type { CarteraId, Moneda } from "@/types/cartera";
 
 export type TipoTransaccion = "ingreso" | "egreso";
-export type SubpresupuestoId = string & { readonly __brand: "SubpresupuestoId" };
+export type CategoriaId = string & { readonly __brand: "CategoriaId" };
+export type CategoriaDetalleId = string & { readonly __brand: "CategoriaDetalleId" };
 
 export interface Adjunto {
   id: string;
@@ -29,7 +30,8 @@ export interface Transaccion {
   saldoPrevio: number;
   saldoPosterior: number;
   descripcion?: string;
-  subPresupuestoId: SubpresupuestoId | null;
+  categoriaId: CategoriaId | null;
+  categoriaDetalleId: CategoriaDetalleId | null;
   adjunto?: Adjunto;
   createdAt: string;
   updatedAt: string;

@@ -9,10 +9,10 @@ import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 interface QuickTestProps {
   disponible: { bs: Money; usd: Money };
   total: { bs: Money; usd: Money };
-  cuentasNoLiquidas: { id: string; nombre: string; tipo: string; saldo: number; moneda: string }[];
+  carterasNoLiquidas: { id: string; nombre: string; tipo: string; saldo: number; moneda: string }[];
 }
 
-export default function QuickTest({ disponible, total, cuentasNoLiquidas }: QuickTestProps) {
+export default function QuickTest({ disponible, total, carterasNoLiquidas }: QuickTestProps) {
   const { moneda, formatPair, fromBs, fromCartera } = useMonedaActiva();
   const [monto, setMonto] = useState("");
   const montoNum = parseFloat(monto) || 0;
@@ -77,7 +77,7 @@ export default function QuickTest({ disponible, total, cuentasNoLiquidas }: Quic
               Te faltan <span className="font-semibold">{faltaDisponiblePair.primary}</span> <span className="text-amber-400">({faltaDisponiblePair.secondary})</span>. Mové fondos de:
             </p>
             <ul className="mt-1 space-y-0.5">
-              {cuentasNoLiquidas
+              {carterasNoLiquidas
                 .filter((c) => c.saldo > 0)
                 .map((c) => (
                   <li key={c.id} className="text-xs text-amber-500">• {c.nombre} ({c.tipo}) — {c.saldo} {c.moneda}</li>

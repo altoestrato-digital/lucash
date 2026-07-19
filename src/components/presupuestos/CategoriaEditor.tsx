@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { Subpresupuesto, MonedaBudget } from "@/types/presupuesto";
+import type { Categoria, MonedaBudget } from "@/types/presupuesto";
+import type { HexColor } from "@/types/hex-color";
 import { bs } from "@/lib/money";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import ColorPicker from "./ColorPicker";
 import PrioridadControl from "./PrioridadControl";
 
-type SubpresupuestoDraft = Omit<Subpresupuesto, "id" | "activo">;
+type CategoriaDraft = Omit<Categoria, "id" | "activo" | "presupuestoId">;
 
 const toBs = (monto: number, moneda: MonedaBudget): number => {
   if (moneda === "Bs") return monto;
@@ -17,28 +18,28 @@ const toBs = (monto: number, moneda: MonedaBudget): number => {
   return Number(convertirABs(usdValue, hoy));
 };
 
-export default function SubpresupuestoEditor({
+export default function CategoriaEditor({
   open,
-  sub,
-  presupuestoSubs,
+  cat,
+  presupuestoCats,
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
   onSave,
   onClose,
 }: {
   open: boolean;
-  sub?: Subpresupuesto;
-  presupuestoSubs: Subpresupuesto[];
+  cat?: Categoria;
+  presupuestoCats: Categoria[];
   gastoMaximoEsperado: number;
   gastoMaximoEsperadoMoneda: MonedaBudget;
-  onSave: (data: SubpresupuestoDraft) => void;
+  onSave: (data: CategoriaDraft) => void;
   onClose: () => void;
 }) {
   return open ? (
-    <SubpresupuestoEditorInner
-      key={sub?.id ?? "new"}
-      sub={sub}
-      presupuestoSubs={presupuestoSubs}
+    <CategoriaEditorInner
+      key={cat?.id ?? "new"}
+      cat={cat}
+      presupuestoCats={presupuestoCats}
       gastoMaximoEsperado={gastoMaximoEsperado}
       gastoMaximoEsperadoMoneda={gastoMaximoEsperadoMoneda}
       onSave={onSave}
@@ -47,51 +48,51 @@ export default function SubpresupuestoEditor({
   ) : null;
 }
 
-function SubpresupuestoEditorInner({
-  sub,
-  presupuestoSubs,
+function CategoriaEditorInner({
+  cat,
+  presupuestoCats,
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
   onSave,
   onClose,
 }: {
-  sub?: Subpresupuesto;
-  presupuestoSubs: Subpresupuesto[];
+  cat?: Categoria;
+  presupuestoCats: Categoria[];
   gastoMaximoEsperado: number;
   gastoMaximoEsperadoMoneda: MonedaBudget;
-  onSave: (data: SubpresupuestoDraft) => void;
+  onSave: (data: CategoriaDraft) => void;
   onClose: () => void;
 }) {
-  const [nombre, setNombre] = useState(sub?.nombre ?? "");
-  const [color, setColor] = useState(sub?.color ?? "#3B82F6");
-  const [limite, setLimite] = useState(sub ? String(Number(sub.limite)) : "");
-  const [limiteMoneda, setLimiteMoneda] = useState<MonedaBudget>(sub?.limiteMoneda ?? "Bs");
-  const [prioridad, setPrioridad] = useState<1 | 2 | 3>(sub?.prioridad ?? 2);
-  const [recurrente, setRecurrente] = useState(sub?.recurrente ?? true);
+  const [nombre, setNombre] = useState(cat?.nombre ?? "");
+  const [color, setColor] = useState(cat?.color ?? "#3B82F6");
+  const [limite, setLimite] = useState(cat ? String(Number(cat.limite)) : "");
+  const [limiteMoneda, setLimiteMoneda] = useState<MonedaBudget>(cat?.limiteMoneda ?? "Bs");
+  const [prioridad, setPrioridad] = useState<1 | 2 | 3>(cat?.prioridad ?? 2);
+  const [recurrente, setRecurrente] = useState(cat?.recurrente ?? true);
 
   const nextOrden = (p: 1 | 2 | 3): number => {
-    const maxOrden = presupuestoSubs
+    const maxOrden = presupuestoCats
       .filter((s) => s.activo && s.prioridad === p)
       .reduce((max, s) => Math.max(max, s.orden), 0);
     return maxOrden + 1;
   };
 
-  const defaultOrden = sub ? sub.orden : nextOrden(prioridad);
+  const defaultOrden = cat ? cat.orden : nextOrden(prioridad);
   const [orden, setOrden] = useState(String(defaultOrden));
 
   const handlePrioridadChange = (p: 1 | 2 | 3) => {
     setPrioridad(p);
-    if (!sub) {
+    if (!cat) {
       setOrden(String(nextOrden(p)));
     }
   };
 
   const gastoMaximoBs = toBs(gastoMaximoEsperado, gastoMaximoEsperadoMoneda);
-  const otrosSubsTotalBs = presupuestoSubs
-    .filter((s) => s.activo && s.id !== sub?.id)
+  const otrosCatsTotalBs = presupuestoCats
+    .filter((s) => s.activo && s.id !== cat?.id)
     .reduce((acc, s) => acc + toBs(Number(s.limite), s.limiteMoneda), 0);
   const esteLimiteBs = limite ? toBs(Number(limite), limiteMoneda) : 0;
-  const totalConEsteBs = otrosSubsTotalBs + esteLimiteBs;
+  const totalConEsteBs = otrosCatsTotalBs + esteLimiteBs;
   const excedeMaximo = gastoMaximoBs > 0 && totalConEsteBs > gastoMaximoBs;
 
   const getEquivalent = (value: string, moneda: MonedaBudget): string => {
@@ -111,7 +112,7 @@ function SubpresupuestoEditorInner({
     if (!nombre.trim() || !limite) return;
     onSave({
       nombre: nombre.trim(),
-      color,
+      color: color as HexColor,
       limite: bs(Number(limite)),
       limiteMoneda,
       prioridad,
@@ -128,7 +129,7 @@ function SubpresupuestoEditorInner({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            {sub ? "Editar sub-presupuesto" : "Nuevo sub-presupuesto"}
+            {cat ? "Editar categoría" : "Nueva categoría"}
           </h2>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
             <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -234,7 +235,7 @@ function SubpresupuestoEditorInner({
             type="submit"
             className="w-full bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 font-medium rounded-lg py-2.5 text-sm transition-colors"
           >
-            {sub ? "Guardar cambios" : "Crear sub-presupuesto"}
+            {cat ? "Guardar cambios" : "Crear categoría"}
           </button>
         </form>
       </div>

@@ -5,8 +5,8 @@ export interface DashboardData {
   disponible: { bs: Money; usd: Money };
   presupuestoCubiertoPct: number;
   gastadoMesBs: Money;
-  gastosPorSub: {
-    subpresupuestoId: string;
+  gastosPorCat: {
+    categoriaId: string;
     nombre: string;
     color: string;
     gastadoBs: Money;

@@ -14,7 +14,7 @@ export default function SnapshotBanner({
 }) {
   const { fromBs } = useMonedaActiva();
 
-  const totalLimites = presupuesto.subpresupuestos
+  const totalLimites = presupuesto.categorias
     .filter((s) => s.activo)
     .reduce((acc, s) => acc + Number(s.limite), 0);
 

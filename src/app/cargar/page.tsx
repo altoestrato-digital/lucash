@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import type { TipoTransaccion, Adjunto, SubpresupuestoId } from "@/types/transaccion";
+import type { TipoTransaccion, Adjunto, CategoriaId } from "@/types/transaccion";
 import type { CarteraId } from "@/types/cartera";
 import { toIsoDateTime, extractDate } from "@/lib/dates";
 import { useCargarForm } from "@/hooks/useCargarForm";
@@ -128,7 +128,7 @@ export default function CargarPage() {
       saldoPrevio: movimiento.saldoPrevio,
       saldoPosterior: movimiento.saldoPosterior,
       descripcion: state.descripcion || undefined,
-      subPresupuestoId: state.subPresupuestoId as SubpresupuestoId | null,
+      categoriaId: state.categoriaId as CategoriaId | null,
       adjunto: state.adjunto ?? undefined,
       esRedireccionExcedente: false,
     });

@@ -6,23 +6,26 @@ import type { ISODate } from "@/lib/dates";
 import type { Money } from "@/lib/money";
 import { bs } from "@/lib/money";
 import type {
+  Categoria,
   MonedaBudget,
   Periodicidad,
   Presupuesto,
   PresupuestoSnapshot,
   Prioridad,
-  Subpresupuesto,
 } from "@/types/presupuesto";
-import type { SubpresupuestoId } from "@/types/transaccion";
+import type { CategoriaId } from "@/types/transaccion";
+import { hexColor } from "@/types/hex-color";
+import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 import { usuariosRepo } from "./usuario";
 
 type Row = Record<string, unknown>;
 
-function rowToSubpresupuesto(row: Row): Subpresupuesto {
+function rowToCategoria(row: Row): Categoria {
   return {
-    id: row.id as SubpresupuestoId,
+    id: row.id as CategoriaId,
+    presupuestoId: row.presupuesto_id as string,
     nombre: row.nombre as string,
-    color: row.color as string,
+    color: hexColor(row.color as string),
     limite: bs(row.limite as number),
     limiteMoneda: (row.limite_moneda as MonedaBudget) ?? "Bs",
     prioridad: row.prioridad as Prioridad,
@@ -32,10 +35,11 @@ function rowToSubpresupuesto(row: Row): Subpresupuesto {
   };
 }
 
-function rowToPresupuesto(row: Row, subs: Subpresupuesto[]): Presupuesto {
+function rowToPresupuesto(row: Row, cats: Categoria[]): Presupuesto {
   return {
     id: row.id as string,
     usuarioId: (row.usuario_id as string) ?? usuariosRepo.getActivo().id,
+    espacioTrabajoId: row.espacio_trabajo_id as EspacioTrabajoId | undefined,
     nombre: row.nombre as "Presupuesto general",
     periodicidad: row.periodicidad as Periodicidad,
     ingresoEsperado: bs(row.ingreso_esperado as number),
@@ -48,7 +52,7 @@ function rowToPresupuesto(row: Row, subs: Subpresupuesto[]): Presupuesto {
       (row.quincena_corte_dia as number | null) === null
         ? undefined
         : ((row.quincena_corte_dia as number) as 1 | 16),
-    subpresupuestos: subs,
+    categorias: cats,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
     cerradoAt: (row.cerrado_at as string | null) ?? undefined,
@@ -58,11 +62,11 @@ function rowToPresupuesto(row: Row, subs: Subpresupuesto[]): Presupuesto {
 let idCounter = 1;
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${idCounter++}`;
 
-function subpresupuestosDe(presupuestoId: string): Subpresupuesto[] {
+function categoriasDe(presupuestoId: string): Categoria[] {
   return queryAll(
-    "SELECT * FROM subpresupuesto WHERE presupuesto_id = ? ORDER BY prioridad, orden",
+    "SELECT * FROM categoria WHERE presupuesto_id = ? ORDER BY prioridad, orden",
     [presupuestoId],
-    rowToSubpresupuesto,
+    rowToCategoria,
   );
 }
 
@@ -136,7 +140,7 @@ export const presupuestoRepo = {
     return queryOne(
       "SELECT * FROM presupuesto WHERE cerrado = 0 AND usuario_id = ? ORDER BY created_at DESC LIMIT 1",
       [usuarioId],
-      (row) => rowToPresupuesto(row, subpresupuestosDe(row.id as string)),
+      (row) => rowToPresupuesto(row, categoriasDe(row.id as string)),
     );
   },
 
@@ -166,17 +170,14 @@ export const presupuestoRepo = {
       const db = getDB();
       const now = new Date().toISOString();
 
-      // 1. Snapshot del período cerrado.
       db.run(
         `INSERT INTO snapshot_presupuesto (id, presupuesto_id, periodo_inicio, periodo_fin, data, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [snapshot.id, snapshot.presupuestoIdOrigen, snapshot.fechaInicio, snapshot.fechaFin, JSON.stringify(snapshot), snapshot.createdAt, now],
       );
 
-      // 2. Cerrar período actual.
       db.run("UPDATE presupuesto SET cerrado = 1, cerrado_at = ?, updated_at = ? WHERE id = ?", [cerradoAt, now, id]);
 
-      // 3. Crear período siguiente.
       return upsertPresupuestoCore(nuevo);
     });
     persist();
@@ -188,7 +189,7 @@ export const presupuestoRepo = {
 function shiftOrden(db: Database, presupuestoId: string, prioridad: number, desdeOrden: number) {
   const now = new Date().toISOString();
   db.run(
-    `UPDATE subpresupuesto SET orden = orden + 1, updated_at = ? WHERE presupuesto_id = ? AND prioridad = ? AND orden >= ? AND activo = 1`,
+    `UPDATE categoria SET orden = orden + 1, updated_at = ? WHERE presupuesto_id = ? AND prioridad = ? AND orden >= ? AND activo = 1`,
     [now, presupuestoId, prioridad, desdeOrden],
   );
 }
@@ -196,25 +197,25 @@ function shiftOrden(db: Database, presupuestoId: string, prioridad: number, desd
 function unshiftOrden(db: Database, presupuestoId: string, prioridad: number, desdeOrden: number) {
   const now = new Date().toISOString();
   db.run(
-    `UPDATE subpresupuesto SET orden = orden - 1, updated_at = ? WHERE presupuesto_id = ? AND prioridad = ? AND orden > ? AND activo = 1`,
+    `UPDATE categoria SET orden = orden - 1, updated_at = ? WHERE presupuesto_id = ? AND prioridad = ? AND orden > ? AND activo = 1`,
     [now, presupuestoId, prioridad, desdeOrden],
   );
 }
 
-export const subpresupuestosRepo = {
-  list(presupuestoId: string): Subpresupuesto[] {
-    return subpresupuestosDe(presupuestoId);
+export const categoriasRepo = {
+  list(presupuestoId: string): Categoria[] {
+    return categoriasDe(presupuestoId);
   },
 
-  add(s: Omit<Subpresupuesto, "id"> & { presupuestoId: string }): Subpresupuesto {
+  add(s: Omit<Categoria, "id" | "activo"> & { presupuestoId: string }): Categoria {
     const created = withTransaction(() => {
-      const id = genId("sub") as SubpresupuestoId;
-      const creada: Subpresupuesto = { ...s, id };
+      const id = genId("cat") as CategoriaId;
+      const creada: Categoria = { ...s, id, activo: true };
       const now = new Date().toISOString();
       const db = getDB();
       shiftOrden(db, s.presupuestoId, creada.prioridad, creada.orden);
       db.run(
-        `INSERT INTO subpresupuesto
+        `INSERT INTO categoria
          (id, presupuesto_id, nombre, color, limite, limite_moneda, prioridad, recurrente, orden, activo, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
         [
@@ -238,22 +239,21 @@ export const subpresupuestosRepo = {
     return created;
   },
 
-  update(id: SubpresupuestoId, data: Partial<Subpresupuesto>): void {
+  update(id: CategoriaId, data: Partial<Categoria>): void {
     const db = getDB();
-    const stmt = db.prepare("SELECT * FROM subpresupuesto WHERE id = ?");
+    const stmt = db.prepare("SELECT * FROM categoria WHERE id = ?");
     stmt.bind([id]);
     if (!stmt.step()) {
       stmt.free();
       return;
     }
     const rawRow = stmt.getAsObject();
-    const current = rowToSubpresupuesto(rawRow);
+    const current = rowToCategoria(rawRow);
     const presupuestoId = rawRow.presupuesto_id as string;
     stmt.free();
     const merged = { ...current, ...data };
 
     withTransaction(() => {
-      // Reorder if priority or orden changed
       const oldPrioridad = current.prioridad;
       const newPrioridad = merged.prioridad;
       const newOrden = merged.orden;
@@ -269,7 +269,7 @@ export const subpresupuestosRepo = {
 
       const now = new Date().toISOString();
       db.run(
-        `UPDATE subpresupuesto
+        `UPDATE categoria
          SET nombre = ?, color = ?, limite = ?, limite_moneda = ?, prioridad = ?, recurrente = ?, orden = ?, activo = ?, updated_at = ?
          WHERE id = ?`,
         [
@@ -290,10 +290,10 @@ export const subpresupuestosRepo = {
     notifyChange();
   },
 
-  softDelete(id: SubpresupuestoId): void {
+  softDelete(id: CategoriaId): void {
     const db = getDB();
     const now = new Date().toISOString();
-    db.run("UPDATE subpresupuesto SET activo = 0, updated_at = ? WHERE id = ?", [now, id]);
+    db.run("UPDATE categoria SET activo = 0, updated_at = ? WHERE id = ?", [now, id]);
     persist();
     notifyChange();
   },
@@ -325,5 +325,4 @@ export const snapshotsRepo = {
   },
 };
 
-// Re-exporta el helper de Money para los consumers.
 export type { Money };

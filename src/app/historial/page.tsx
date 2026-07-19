@@ -24,7 +24,7 @@ export default function HistorialPage() {
     filtro,
     setPeriodo,
     setFiltroTipo,
-    setFiltroSub,
+    setFiltroCategoria,
     setFiltroCartera,
     limpiarFiltros,
     tieneFiltrosActivos,
@@ -87,7 +87,7 @@ export default function HistorialPage() {
       <ActiveFilterChips
         filtro={filtro}
         onRemoveTipo={() => setFiltroTipo("todos")}
-        onRemoveSub={() => setFiltroSub("todos")}
+        onRemoveCategoria={() => setFiltroCategoria("todos")}
         onRemoveCartera={() => setFiltroCartera("todos")}
       />
 
@@ -103,7 +103,7 @@ export default function HistorialPage() {
         presupuesto={presupuesto}
         carteras={carteras}
         onTipoChange={setFiltroTipo}
-        onSubChange={setFiltroSub}
+        onCategoriaChange={setFiltroCategoria}
         onCarteraChange={setFiltroCartera}
         onClose={() => setFilterSheetOpen(false)}
       />

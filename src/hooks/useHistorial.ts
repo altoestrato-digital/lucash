@@ -13,15 +13,15 @@ const FILTROS_KEY = "lucash:filtros-historial";
 const filtroDefault: FiltroHistorial = {
   periodo: { tipo: "presupuesto" },
   tipo: "todos",
-  subPresupuestoId: "todos",
+  categoriaId: "todos",
   carteraId: "todos",
 };
 
 function matchesFiltro(tx: Transaccion, filtro: FiltroHistorial): boolean {
   if (filtro.tipo !== "todos" && tx.tipo !== filtro.tipo) return false;
-  if (filtro.subPresupuestoId !== "todos") {
-    if (filtro.subPresupuestoId === "general" && tx.subPresupuestoId !== null) return false;
-    if (filtro.subPresupuestoId !== "general" && tx.subPresupuestoId !== filtro.subPresupuestoId) return false;
+  if (filtro.categoriaId !== "todos") {
+    if (filtro.categoriaId === "general" && tx.categoriaId !== null) return false;
+    if (filtro.categoriaId !== "general" && tx.categoriaId !== filtro.categoriaId) return false;
   }
   if (filtro.carteraId !== "todos" && tx.carteraId !== filtro.carteraId) return false;
   return true;
@@ -118,8 +118,8 @@ export function useHistorial(presupuesto: Presupuesto | null) {
     setFiltroState((prev) => ({ ...prev, tipo }));
   }, []);
 
-  const setFiltroSub = useCallback((subPresupuestoId: FiltroHistorial["subPresupuestoId"]) => {
-    setFiltroState((prev) => ({ ...prev, subPresupuestoId }));
+  const setFiltroCategoria = useCallback((categoriaId: FiltroHistorial["categoriaId"]) => {
+    setFiltroState((prev) => ({ ...prev, categoriaId }));
   }, []);
 
   const setFiltroCartera = useCallback((carteraId: FiltroHistorial["carteraId"]) => {
@@ -127,12 +127,12 @@ export function useHistorial(presupuesto: Presupuesto | null) {
   }, []);
 
   const limpiarFiltros = useCallback(() => {
-    setFiltroState((prev) => ({ ...prev, tipo: "todos", subPresupuestoId: "todos", carteraId: "todos" }));
+    setFiltroState((prev) => ({ ...prev, tipo: "todos", categoriaId: "todos", carteraId: "todos" }));
   }, []);
 
   const tieneFiltrosActivos =
     filtro.tipo !== "todos" ||
-    filtro.subPresupuestoId !== "todos" ||
+    filtro.categoriaId !== "todos" ||
     filtro.carteraId !== "todos";
 
   return {
@@ -141,7 +141,7 @@ export function useHistorial(presupuesto: Presupuesto | null) {
     filtro,
     setPeriodo,
     setFiltroTipo,
-    setFiltroSub,
+    setFiltroCategoria,
     setFiltroCartera,
     limpiarFiltros,
     tieneFiltrosActivos,

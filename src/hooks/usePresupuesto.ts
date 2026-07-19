@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type {
+  Categoria,
   Presupuesto,
   PresupuestoSnapshot,
-  Subpresupuesto,
 } from "@/types/presupuesto";
-import { presupuestoRepo, snapshotsRepo, subpresupuestosRepo, subscribe, isDBReady } from "@/lib/db";
-import type { SubpresupuestoId } from "@/types/transaccion";
+import { presupuestoRepo, snapshotsRepo, categoriasRepo, subscribe, isDBReady } from "@/lib/db";
+import type { CategoriaId } from "@/types/transaccion";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { bs } from "@/lib/money";
 
@@ -31,7 +31,7 @@ export function usePresupuesto() {
       const merged: Omit<Presupuesto, "id" | "createdAt"> = {
         ...current,
         ...data,
-        subpresupuestos: data.subpresupuestos ?? current.subpresupuestos,
+        categorias: data.categorias ?? current.categorias,
       };
       presupuestoRepo.upsert(merged);
     } else {
@@ -39,16 +39,16 @@ export function usePresupuesto() {
     }
   }, []);
 
-  const addSubpresupuesto = useCallback((sub: Omit<Subpresupuesto, "id"> & { presupuestoId: string }) => {
-    subpresupuestosRepo.add(sub);
+  const addCategoria = useCallback((cat: Omit<Categoria, "id" | "activo"> & { presupuestoId: string }) => {
+    categoriasRepo.add(cat);
   }, []);
 
-  const updateSubpresupuesto = useCallback((id: string, data: Partial<Subpresupuesto>) => {
-    subpresupuestosRepo.update(id as SubpresupuestoId, data);
+  const updateCategoria = useCallback((id: string, data: Partial<Categoria>) => {
+    categoriasRepo.update(id as CategoriaId, data);
   }, []);
 
-  const softDeleteSubpresupuesto = useCallback((id: string) => {
-    subpresupuestosRepo.softDelete(id as SubpresupuestoId);
+  const softDeleteCategoria = useCallback((id: string) => {
+    categoriasRepo.softDelete(id as CategoriaId);
   }, []);
 
   const cerrarPeriodo = useCallback(() => {
@@ -67,7 +67,7 @@ export function usePresupuesto() {
       ingresoRealBs: bs(0),
       gastoMaximoEsperado: current.gastoMaximoEsperado,
       gastoMaximoEsperadoMoneda: current.gastoMaximoEsperadoMoneda,
-      subpresupuestos: [...current.subpresupuestos],
+      categorias: [...current.categorias],
       transaccionesIds: [],
       balanceBs: bs(0),
       createdAt: now,
@@ -94,7 +94,7 @@ export function usePresupuesto() {
         fechaInicio: siguienteRango.fechaInicio,
         fechaFin: siguienteRango.fechaFin,
         quincenaCorteDia: current.quincenaCorteDia,
-        subpresupuestos: current.subpresupuestos.filter((s) => s.recurrente).map((s) => ({ ...s })),
+        categorias: current.categorias.filter((s) => s.recurrente).map((s) => ({ ...s })),
       },
     );
   }, []);
@@ -103,9 +103,9 @@ export function usePresupuesto() {
     presupuesto,
     snapshots,
     updatePresupuesto,
-    addSubpresupuesto,
-    updateSubpresupuesto,
-    softDeleteSubpresupuesto,
+    addCategoria,
+    updateCategoria,
+    softDeleteCategoria,
     cerrarPeriodo,
   };
 }

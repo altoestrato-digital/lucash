@@ -17,8 +17,8 @@ import {
 import { useMonedaActiva, type UseMonedaActivaReturn } from "@/hooks/useMonedaActiva";
 
 interface SpendingChartProps {
-  gastosPorSub: {
-    subpresupuestoId: string;
+  gastosPorCategoria: {
+    categoriaId: string;
     nombre: string;
     color: string;
     gastadoBs: Money;
@@ -41,10 +41,10 @@ function CustomTooltip({ active, payload, label, fromBs }: { active?: boolean; p
   );
 }
 
-export default function SpendingChart({ gastosPorSub }: SpendingChartProps) {
+export default function SpendingChart({ gastosPorCategoria }: SpendingChartProps) {
   const { fromBs, moneda } = useMonedaActiva();
   const hoy = toIso(new Date());
-  const chartData = gastosPorSub.map((g) => ({
+  const chartData = gastosPorCategoria.map((g) => ({
     name: g.nombre.length > 10 ? g.nombre.slice(0, 10) + "…" : g.nombre,
     monto: moneda === "USD" ? Number(convertirAUSD(Number(g.gastadoBs), "Bs", hoy)) : Number(g.gastadoBs),
     montoBs: Number(g.gastadoBs),
@@ -104,8 +104,8 @@ export default function SpendingChart({ gastosPorSub }: SpendingChartProps) {
 
       {chartData.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-3">
-          {gastosPorSub.map((g) => (
-            <div key={g.subpresupuestoId} className="flex items-center gap-1.5">
+          {gastosPorCategoria.map((g) => (
+            <div key={g.categoriaId} className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: g.color }} />
               <span className="text-xs text-muted">{g.nombre}</span>
             </div>

@@ -39,8 +39,8 @@ export const getTasaCriptoHoy = (moneda: "USDT" | "BTC" | "ETH"): number => {
  * auditar (mismo cálculo que `convertirAUSD` / `convertirABs` pero
  * tomando la tasa como parámetro, sin lookup).
  *
- * - `bsToUsd(b, tasa)`  →  b / tasa   (cuenta en Bs → USD)
- * - `usdToBs(u, tasa)`  →  u * tasa   (cuenta en USD → Bs)
+ * - `bsToUsd(b, tasa)`  →  b / tasa   (monto en Bs → USD)
+ * - `usdToBs(u, tasa)`  →  u * tasa   (monto en USD → Bs)
  */
 export const bsToUsd = (montoBs: number, tasa: number): number =>
   tasa > 0 ? montoBs / tasa : 0;

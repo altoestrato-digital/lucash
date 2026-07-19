@@ -110,10 +110,10 @@ export default function TransaccionDrawer({ open, transaccion, onClose }: Transa
           <p className="text-sm text-foreground">{tx.carteraId}</p>
         </div>
 
-        {tx.subPresupuestoId && (
+        {tx.categoriaId && (
           <div className="mb-4 rounded-xl bg-surface-elevated border border-border p-3">
-            <p className="text-xs text-muted">Sub-presupuesto</p>
-            <p className="text-sm text-foreground">{tx.subPresupuestoId}</p>
+            <p className="text-xs text-muted">Categoria</p>
+            <p className="text-sm text-foreground">{tx.categoriaId}</p>
           </div>
         )}
 

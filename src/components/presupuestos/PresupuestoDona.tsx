@@ -44,7 +44,7 @@ export default function PresupuestoDona(props: {
     { name: "Gastos", value: gastoTotal, label: "Gastado", color: "#EF4444" },
   ].filter((d) => d.value > 0);
 
-  const outerData = cobertura.porSub.map((s) => ({
+  const outerData = cobertura.porCat.map((s) => ({
     name: s.nombre,
     value: Number(s.gastadoBs),
     label: s.nombre,

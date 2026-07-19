@@ -1,25 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import type { Presupuesto, Subpresupuesto, Periodicidad, MonedaBudget } from "@/types/presupuesto";
+import type { Presupuesto, Categoria, Periodicidad, MonedaBudget } from "@/types/presupuesto";
 import { bs } from "@/lib/money";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import PeriodicidadSelect from "./PeriodicidadSelect";
-import SubpresupuestoRow from "./SubpresupuestoRow";
+import CategoriaRow from "./CategoriaRow";
 
 export default function PresupuestoEditor({
   presupuesto,
   onSave,
-  onAddSub,
-  onEditSub,
-  onDeleteSub,
+  onAddCat,
+  onEditCat,
+  onDeleteCat,
 }: {
   presupuesto: Presupuesto;
   onSave: (data: Partial<Presupuesto>) => void;
-  onAddSub: () => void;
-  onEditSub: (sub: Subpresupuesto) => void;
-  onDeleteSub: (id: string) => void;
+  onAddCat: () => void;
+  onEditCat: (cat: Categoria) => void;
+  onDeleteCat: (id: string) => void;
 }) {
   const hoy = toIso(new Date());
 
@@ -31,7 +31,7 @@ export default function PresupuestoEditor({
   const [corteDia, setCorteDia] = useState<1 | 16>(presupuesto.quincenaCorteDia ?? 1);
   const [dirty, setDirty] = useState(false);
 
-  const activos = presupuesto.subpresupuestos.filter((s) => s.activo);
+  const activos = presupuesto.categorias.filter((s) => s.activo);
 
   const getEquivalentBs = (value: string, moneda: MonedaBudget): string => {
     const num = Number(value);
@@ -156,27 +156,27 @@ export default function PresupuestoEditor({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">Sub-presupuestos</h3>
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">Categorias</h3>
           <button
-            onClick={onAddSub}
+            onClick={onAddCat}
             className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
           >
-            + Nuevo sub
+            + Nueva categoria
           </button>
         </div>
         {activos
           .sort((a, b) => a.prioridad - b.prioridad || a.orden - b.orden)
-          .map((sub) => (
-            <SubpresupuestoRow
-              key={sub.id}
-              sub={sub}
-              onEdit={() => onEditSub(sub)}
-              onDelete={() => onDeleteSub(sub.id)}
+          .map((cat) => (
+            <CategoriaRow
+              key={cat.id}
+              cat={cat}
+              onEdit={() => onEditCat(cat)}
+              onDelete={() => onDeleteCat(cat.id)}
             />
           ))}
         {activos.length === 0 && (
           <p className="text-sm text-muted text-center py-4">
-            No hay sub-presupuestos. Crea uno nuevo.
+            No hay categorias. Crea una nueva.
           </p>
         )}
       </div>

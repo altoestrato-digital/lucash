@@ -7,7 +7,7 @@ import type { CargarFormState } from "@/hooks/useCargarForm";
 import type { ISODateTime } from "@/lib/dates";
 import { extractDate } from "@/lib/dates";
 import { useDolarApiForDate } from "@/hooks/useDolarApiForDate";
-import SubpresupuestoSelect from "./SubpresupuestoSelect";
+import CategoriaSelect from "./CategoriaSelect";
 import TasaBcvField from "./TasaBcvField";
 import CarteraSelect from "./CarteraSelect";
 import ReceiptThumbnail from "./ReceiptThumbnail";
@@ -111,11 +111,11 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
 
       {!isIngreso && (
         <div className="space-y-1.5">
-          <label className={labelClass}>Sub-presupuesto</label>
-          <SubpresupuestoSelect
-            value={state.subPresupuestoId}
+          <label className={labelClass}>Categoria</label>
+          <CategoriaSelect
+            value={state.categoriaId}
             presupuesto={presupuesto}
-            onChange={(id) => onUpdateField("subPresupuestoId", id)}
+            onChange={(id) => onUpdateField("categoriaId", id)}
           />
         </div>
       )}

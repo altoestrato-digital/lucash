@@ -6,20 +6,20 @@ import { X } from "lucide-react";
 interface ActiveFilterChipsProps {
   filtro: FiltroHistorial;
   onRemoveTipo: () => void;
-  onRemoveSub: () => void;
+  onRemoveCategoria: () => void;
   onRemoveCartera: () => void;
 }
 
-export default function ActiveFilterChips({ filtro, onRemoveTipo, onRemoveSub, onRemoveCartera }: ActiveFilterChipsProps) {
+export default function ActiveFilterChips({ filtro, onRemoveTipo, onRemoveCategoria, onRemoveCartera }: ActiveFilterChipsProps) {
   const chips: { label: string; onRemove: () => void }[] = [];
 
   if (filtro.tipo !== "todos") {
     chips.push({ label: filtro.tipo === "ingreso" ? "Ingreso" : "Egreso", onRemove: onRemoveTipo });
   }
-  if (filtro.subPresupuestoId !== "todos") {
+  if (filtro.categoriaId !== "todos") {
     chips.push({
-      label: filtro.subPresupuestoId === "general" ? "Presupuesto general" : filtro.subPresupuestoId,
-      onRemove: onRemoveSub,
+      label: filtro.categoriaId === "general" ? "Presupuesto general" : filtro.categoriaId,
+      onRemove: onRemoveCategoria,
     });
   }
   if (filtro.carteraId !== "todos") {

@@ -1,5 +1,5 @@
 import type { ISODate } from "@/lib/dates";
-import type { TipoTransaccion, SubpresupuestoId } from "@/types/transaccion";
+import type { TipoTransaccion, CategoriaId } from "@/types/transaccion";
 import type { Money } from "@/lib/money";
 
 export type Periodo =
@@ -10,7 +10,7 @@ export type Periodo =
 export interface FiltroHistorial {
   periodo: Periodo;
   tipo: "todos" | TipoTransaccion;
-  subPresupuestoId: "todos" | "general" | SubpresupuestoId;
+  categoriaId: "todos" | "general" | CategoriaId;
   carteraId: "todos" | string;
 }
 

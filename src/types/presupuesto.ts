@@ -1,16 +1,29 @@
 import type { Money } from "@/lib/money";
 import type { ISODate } from "@/lib/dates";
-import type { SubpresupuestoId } from "@/types/transaccion";
+import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
+import type { HexColor } from "@/types/hex-color";
+import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 
 export type Periodicidad = "diaria" | "semanal" | "quincenal" | "mensual" | "trimestral";
 export type Prioridad = 1 | 2 | 3;
 export type EstadoCobertura = "cubierto" | "parcial" | "no-cubierto" | "excedido";
 export type MonedaBudget = "Bs" | "USD";
 
-export interface Subpresupuesto {
-  id: SubpresupuestoId;
+export interface CategoriaDetalle {
+  id: CategoriaDetalleId;
+  categoriaId: CategoriaId;
   nombre: string;
-  color: string;
+  montoEstimado: Money;
+  orden: number;
+  color: HexColor;
+  activo: boolean;
+}
+
+export interface Categoria {
+  id: CategoriaId;
+  presupuestoId: string;
+  nombre: string;
+  color: HexColor;
   limite: Money;
   limiteMoneda: MonedaBudget;
   prioridad: Prioridad;
@@ -22,6 +35,7 @@ export interface Subpresupuesto {
 export interface Presupuesto {
   id: string;
   usuarioId: string;
+  espacioTrabajoId?: EspacioTrabajoId;
   nombre: "Presupuesto general";
   periodicidad: Periodicidad;
   ingresoEsperado: Money;
@@ -31,7 +45,7 @@ export interface Presupuesto {
   fechaInicio: ISODate;
   fechaFin: ISODate;
   quincenaCorteDia?: 1 | 16;
-  subpresupuestos: Subpresupuesto[];
+  categorias: Categoria[];
   createdAt: string;
   updatedAt: string;
   cerradoAt?: string;
@@ -48,17 +62,17 @@ export interface PresupuestoSnapshot {
   ingresoRealBs: Money;
   gastoMaximoEsperado: Money;
   gastoMaximoEsperadoMoneda: MonedaBudget;
-  subpresupuestos: Subpresupuesto[];
+  categorias: Categoria[];
   transaccionesIds: string[];
   balanceBs: Money;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CoberturaSub {
-  subpresupuestoId: SubpresupuestoId | "otros";
+export interface CoberturaCategoria {
+  categoriaId: CategoriaId | "otros";
   nombre: string;
-  color: string;
+  color: HexColor;
   limiteBs: Money;
   limiteOriginal: Money;
   limiteMoneda: MonedaBudget;
@@ -83,9 +97,9 @@ export interface ResumenCobertura {
   gastoMaximoEsperadoMoneda: MonedaBudget;
   gastoTotalBs: Money;
   balanceBs: Money;
-  subCubiertos: number;
-  totalSubs: number;
-  porSub: CoberturaSub[];
+  catCubiertas: number;
+  totalCats: number;
+  porCat: CoberturaCategoria[];
   estadoGlobal: "sobregiro" | "falta-p1" | "falta-p2" | "falta-p3" | "todo-cubierto";
   mensaje: string;
   alertas: AlertaCobertura[];

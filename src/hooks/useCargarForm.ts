@@ -16,7 +16,7 @@ export interface CargarFormState {
   montoUsd: string;
   tasaBcv: string;
   tasaBcvAuto: boolean;
-  subPresupuestoId: string | null;
+  categoriaId: string | null;
   descripcion: string;
   carteraId: CarteraId | null;
   fecha: ISODateTime;
@@ -33,7 +33,7 @@ const defaultState: CargarFormState = {
   montoUsd: "",
   tasaBcv: "",
   tasaBcvAuto: true,
-  subPresupuestoId: null,
+  categoriaId: null,
   descripcion: "",
   carteraId: null,
   fecha: toIsoDateTime(new Date()),

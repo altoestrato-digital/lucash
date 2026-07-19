@@ -1,16 +1,17 @@
 "use client";
 
 import type { FiltroHistorial } from "@/types/historial";
+import type { Presupuesto } from "@/types/presupuesto";
 import type { Cartera } from "@/types/cartera";
 import { X } from "lucide-react";
 
 interface HistorialFiltersProps {
   open: boolean;
   filtro: FiltroHistorial;
-  presupuesto: { subpresupuestos: { id: string; nombre: string; activo: boolean }[] } | null;
+  presupuesto: Presupuesto | null;
   carteras: Cartera[];
   onTipoChange: (t: FiltroHistorial["tipo"]) => void;
-  onSubChange: (s: FiltroHistorial["subPresupuestoId"]) => void;
+  onCategoriaChange: (c: FiltroHistorial["categoriaId"]) => void;
   onCarteraChange: (c: FiltroHistorial["carteraId"]) => void;
   onClose: () => void;
 }
@@ -21,13 +22,13 @@ export default function HistorialFilters({
   presupuesto,
   carteras,
   onTipoChange,
-  onSubChange,
+  onCategoriaChange,
   onCarteraChange,
   onClose,
 }: HistorialFiltersProps) {
   if (!open) return null;
 
-  const subs = presupuesto?.subpresupuestos?.filter((s) => s.activo) ?? [];
+  const cats = presupuesto?.categorias?.filter((s) => s.activo) ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end">
@@ -62,15 +63,15 @@ export default function HistorialFilters({
         </div>
 
         <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-muted">Sub-presupuesto</p>
+          <p className="mb-2 text-sm font-medium text-muted">Categoria</p>
           <select
-            value={filtro.subPresupuestoId}
-            onChange={(e) => onSubChange(e.target.value as FiltroHistorial["subPresupuestoId"])}
+            value={filtro.categoriaId}
+            onChange={(e) => onCategoriaChange(e.target.value as FiltroHistorial["categoriaId"])}
             className="w-full rounded-xl border border-border bg-surface-elevated px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
           >
             <option value="todos">Todos</option>
             <option value="general">Presupuesto general</option>
-            {subs.map((s) => (
+            {cats.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
               </option>

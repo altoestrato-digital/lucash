@@ -3,13 +3,14 @@ export { DBProvider } from "./provider";
 export { SCHEMA_VERSION, SCHEMA_SQL } from "./schema";
 export { usuariosRepo } from "./queries/usuario";
 export { carterasRepo, metasRepo, movimientosRepo } from "./queries/carteras";
-export { carterasRepo as cuentasRepo } from "./queries/carteras";
 export { perfilRepo } from "./queries/perfil";
 export {
   presupuestoRepo,
-  subpresupuestosRepo,
+  categoriasRepo,
   snapshotsRepo,
 } from "./queries/presupuesto";
+export { categoriaDetallesRepo } from "./queries/categoria-detalle";
+export { espacioTrabajoRepo } from "./queries/espacio-trabajo";
 export { transaccionesRepo } from "./queries/transacciones";
 export {
   tasasBcvRepo,

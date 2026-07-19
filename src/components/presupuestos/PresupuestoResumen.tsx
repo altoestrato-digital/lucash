@@ -3,7 +3,7 @@
 import type { ResumenCobertura, Presupuesto } from "@/types/presupuesto";
 import PresupuestoDona from "./PresupuestoDona";
 import CoberturaBanner from "./CoberturaBanner";
-import SubpresupuestoCard from "./SubpresupuestoCard";
+import CategoriaCard from "./CategoriaCard";
 import { Wallet, TrendingUp } from "lucide-react";
 
 interface Props {
@@ -56,14 +56,14 @@ export default function PresupuestoResumen({
         </button>
       </div>
 
-      {cobertura && cobertura.porSub.length > 0 && (
+      {cobertura && cobertura.porCat.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-muted uppercase tracking-wide">
             Desglose
           </h2>
           <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-            {cobertura.porSub.map((sub) => (
-              <SubpresupuestoCard key={sub.subpresupuestoId} sub={sub} />
+            {cobertura.porCat.map((cat) => (
+              <CategoriaCard key={cat.categoriaId} cat={cat} />
             ))}
           </div>
         </div>

@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { Subpresupuesto } from "@/types/presupuesto";
+import type { Categoria } from "@/types/presupuesto";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 
-export default function SubpresupuestoRow({
-  sub,
+export default function CategoriaRow({
+  cat,
   onEdit,
   onDelete,
 }: {
-  sub: Subpresupuesto;
+  cat: Categoria;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -34,27 +34,27 @@ export default function SubpresupuestoRow({
     3: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
   };
 
-  const displayPair = sub.limiteMoneda === "Bs"
-    ? fromBs(sub.limite)
-    : fromCartera(Number(sub.limite), sub.limiteMoneda);
+  const displayPair = cat.limiteMoneda === "Bs"
+    ? fromBs(cat.limite)
+    : fromCartera(Number(cat.limite), cat.limiteMoneda);
 
   return (
     <div className="flex items-center gap-3 py-3 px-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
       <span
         className="w-3 h-3 rounded-full shrink-0"
-        style={{ backgroundColor: sub.color }}
+        style={{ backgroundColor: cat.color }}
       />
       <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-        {sub.nombre}
+        {cat.nombre}
       </span>
       <div className="flex items-center gap-1.5">
-        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${prioridadColors[sub.prioridad]}`}>
-          {prioridadLabels[sub.prioridad]}
+        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${prioridadColors[cat.prioridad]}`}>
+          {prioridadLabels[cat.prioridad]}
         </span>
         <span className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
           {displayPair.primary}
         </span>
-        {sub.recurrente && (
+        {cat.recurrente && (
           <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-1.5 py-0.5 rounded font-medium">
             R
           </span>

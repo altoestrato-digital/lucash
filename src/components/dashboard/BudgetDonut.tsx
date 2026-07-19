@@ -6,8 +6,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useMonedaActiva, type UseMonedaActivaReturn } from "@/hooks/useMonedaActiva";
 
 interface BudgetDonutProps {
-  gastosPorSub: {
-    subpresupuestoId: string;
+  gastosPorCategoria: {
+    categoriaId: string;
     nombre: string;
     color: string;
     gastadoBs: Money;
@@ -27,12 +27,12 @@ function CustomTooltip({ active, payload, fromBs }: { active?: boolean; payload?
   );
 }
 
-export default function BudgetDonut({ gastosPorSub }: BudgetDonutProps) {
+export default function BudgetDonut({ gastosPorCategoria }: BudgetDonutProps) {
   const { fromBs } = useMonedaActiva();
-  const totalGastado = gastosPorSub.reduce((a, g) => a + Number(g.gastadoBs), 0);
+  const totalGastado = gastosPorCategoria.reduce((a, g) => a + Number(g.gastadoBs), 0);
   const totalPair = fromBs(bs(totalGastado));
 
-  const data = gastosPorSub.map((g) => ({
+  const data = gastosPorCategoria.map((g) => ({
     name: g.nombre,
     value: Number(g.gastadoBs),
     label: g.nombre,
@@ -79,8 +79,8 @@ export default function BudgetDonut({ gastosPorSub }: BudgetDonutProps) {
         </div>
 
         <div className="flex-1 space-y-2.5">
-          {gastosPorSub.map((g) => (
-            <div key={g.subpresupuestoId} className="flex items-center gap-2">
+          {gastosPorCategoria.map((g) => (
+            <div key={g.categoriaId} className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
               <span className="flex-1 text-sm text-foreground truncate">{g.nombre}</span>
               <span className="text-sm font-medium text-muted">{Math.round(g.porcentaje)}%</span>

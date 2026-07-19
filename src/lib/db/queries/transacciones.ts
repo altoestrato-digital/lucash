@@ -5,7 +5,8 @@ import type { ISODateTime } from "@/lib/dates";
 import type { CarteraId, Moneda } from "@/types/cartera";
 import type {
   Adjunto,
-  SubpresupuestoId,
+  CategoriaId,
+  CategoriaDetalleId,
   TipoTransaccion,
   Transaccion,
 } from "@/types/transaccion";
@@ -25,11 +26,13 @@ function rowToTransaccion(row: Row): Transaccion {
     montoUsd: row.monto_usd as Transaccion["montoUsd"],
     tasaOficial: (row.tasa_oficial as number) ?? 0,
     tasaParalelo: (row.tasa_paralelo as number) ?? 0,
-    carteraId: (row.cuenta_id as CarteraId) ?? ("" as CarteraId),
+    carteraId: (row.cartera_id as CarteraId) ?? ("" as CarteraId),
     saldoPrevio: (row.saldo_previo as number) ?? 0,
     saldoPosterior: (row.saldo_posterior as number) ?? 0,
-    subPresupuestoId:
-      row.sub_presupuesto_id === null ? null : (row.sub_presupuesto_id as SubpresupuestoId),
+    categoriaId:
+      row.categoria_id === null ? null : (row.categoria_id as CategoriaId),
+    categoriaDetalleId:
+      row.categoria_detalle_id === null ? null : (row.categoria_detalle_id as CategoriaDetalleId),
     descripcion: (row.descripcion as string | null) ?? undefined,
     adjunto: row.adjunto ? (JSON.parse(row.adjunto as string) as Adjunto) : undefined,
     fuenteOcr: Boolean(row.fuente_ocr),
@@ -61,7 +64,8 @@ export interface AddTransaccionInput {
   saldoPrevio: number;
   saldoPosterior: number;
   descripcion?: string;
-  subPresupuestoId?: SubpresupuestoId | null;
+  categoriaId?: CategoriaId | null;
+  categoriaDetalleId?: CategoriaDetalleId | null;
   adjunto?: Adjunto;
   fuenteOcr?: boolean;
   usoAhorroConfirmado?: boolean;
@@ -88,7 +92,8 @@ export const transaccionesRepo = {
       id,
       createdAt: now,
       updatedAt: now,
-      subPresupuestoId: input.subPresupuestoId ?? null,
+      categoriaId: input.categoriaId ?? null,
+      categoriaDetalleId: input.categoriaDetalleId ?? null,
       fuenteOcr: input.fuenteOcr ?? false,
       usoAhorroConfirmado: input.usoAhorroConfirmado ?? false,
       esRedireccionExcedente: input.esRedireccionExcedente ?? false,
@@ -99,10 +104,10 @@ export const transaccionesRepo = {
        (id, tipo, fecha, emisor_receptor, concepto,
         monto_original, moneda_original, monto_bs, monto_usd,
         tasa_oficial, tasa_paralelo,
-        cuenta_id, saldo_previo, saldo_posterior,
-        descripcion, sub_presupuesto_id, adjunto,
+        cartera_id, saldo_previo, saldo_posterior,
+        descripcion, categoria_id, categoria_detalle_id, adjunto,
         fuente_ocr, uso_ahorro_confirmado, es_redireccion_excedente, activa, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       [
         created.id,
         created.tipo,
@@ -119,7 +124,8 @@ export const transaccionesRepo = {
         created.saldoPrevio,
         created.saldoPosterior,
         created.descripcion ?? null,
-        created.subPresupuestoId ?? null,
+        created.categoriaId ?? null,
+        created.categoriaDetalleId ?? null,
         created.adjunto ? JSON.stringify(created.adjunto) : null,
         created.fuenteOcr ? 1 : 0,
         created.usoAhorroConfirmado === undefined ? null : created.usoAhorroConfirmado ? 1 : 0,
@@ -142,11 +148,11 @@ export const transaccionesRepo = {
 
   clearAll(): void {
     const db = getDB();
-    db.run("DELETE FROM movimiento_cuenta WHERE transaccion_origen_id IS NOT NULL");
+    db.run("DELETE FROM movimiento_cartera WHERE transaccion_origen_id IS NOT NULL");
     db.run("DELETE FROM transaccion");
     persist();
     notifyChange();
   },
 };
 
-export type { Transaccion, TipoTransaccion, Adjunto, SubpresupuestoId, CarteraId, Moneda };
+export type { Transaccion, TipoTransaccion, Adjunto, CategoriaId, CategoriaDetalleId, CarteraId, Moneda };

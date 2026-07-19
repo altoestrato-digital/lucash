@@ -1,6 +1,14 @@
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 1;
 
 export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS espacio_trabajo (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  es_default INTEGER NOT NULL DEFAULT 0,
+  moneda_default TEXT NOT NULL DEFAULT 'Bs',
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS usuario (
   id TEXT PRIMARY KEY,
   nombre TEXT NOT NULL,
@@ -21,9 +29,10 @@ CREATE TABLE IF NOT EXISTS perfil (
   updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS cuenta (
+CREATE TABLE IF NOT EXISTS cartera (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL DEFAULT 'default',
+  espacio_trabajo_id TEXT,
   nombre TEXT NOT NULL,
   tipo TEXT NOT NULL,
   moneda TEXT NOT NULL,
@@ -32,12 +41,13 @@ CREATE TABLE IF NOT EXISTS cuenta (
   color TEXT NOT NULL,
   activo INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (espacio_trabajo_id) REFERENCES espacio_trabajo(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS meta_cuenta (
+CREATE TABLE IF NOT EXISTS meta_cartera (
   id TEXT PRIMARY KEY,
-  cuenta_id TEXT NOT NULL,
+  cartera_id TEXT NOT NULL,
   nombre TEXT NOT NULL,
   monto_objetivo REAL NOT NULL,
   fecha_meta TEXT,
@@ -45,19 +55,19 @@ CREATE TABLE IF NOT EXISTS meta_cuenta (
   cumplida_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  FOREIGN KEY (cuenta_id) REFERENCES cuenta(id) ON DELETE CASCADE
+  FOREIGN KEY (cartera_id) REFERENCES cartera(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS movimiento_cuenta (
+CREATE TABLE IF NOT EXISTS movimiento_cartera (
   id TEXT PRIMARY KEY,
-  cuenta_id TEXT NOT NULL,
+  cartera_id TEXT NOT NULL,
   tipo TEXT NOT NULL,
   monto REAL NOT NULL,
-  moneda_cuenta TEXT NOT NULL DEFAULT 'Bs',
+  moneda_cartera TEXT NOT NULL DEFAULT 'Bs',
   saldo_previo REAL NOT NULL DEFAULT 0,
   saldo_posterior REAL NOT NULL DEFAULT 0,
   conversion_id TEXT,
-  cuenta_contraparte_id TEXT,
+  cartera_contraparte_id TEXT,
   tasa_usd_por_moneda REAL,
   fecha TEXT NOT NULL,
   descripcion TEXT,
@@ -65,12 +75,13 @@ CREATE TABLE IF NOT EXISTS movimiento_cuenta (
   transaccion_origen_id TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  FOREIGN KEY (cuenta_id) REFERENCES cuenta(id) ON DELETE CASCADE
+  FOREIGN KEY (cartera_id) REFERENCES cartera(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS presupuesto (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL DEFAULT 'default',
+  espacio_trabajo_id TEXT,
   nombre TEXT NOT NULL DEFAULT 'Presupuesto general',
   periodicidad TEXT NOT NULL DEFAULT 'mensual',
   ingreso_esperado REAL NOT NULL,
@@ -83,10 +94,11 @@ CREATE TABLE IF NOT EXISTS presupuesto (
   cerrado INTEGER NOT NULL DEFAULT 0,
   cerrado_at TEXT,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (espacio_trabajo_id) REFERENCES espacio_trabajo(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS subpresupuesto (
+CREATE TABLE IF NOT EXISTS categoria (
   id TEXT PRIMARY KEY,
   presupuesto_id TEXT NOT NULL,
   nombre TEXT NOT NULL,
@@ -100,6 +112,19 @@ CREATE TABLE IF NOT EXISTS subpresupuesto (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (presupuesto_id) REFERENCES presupuesto(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS categoria_detalle (
+  id TEXT PRIMARY KEY,
+  categoria_id TEXT NOT NULL,
+  nombre TEXT NOT NULL,
+  monto_estimado REAL NOT NULL,
+  orden INTEGER NOT NULL,
+  color TEXT NOT NULL,
+  activo INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS snapshot_presupuesto (
@@ -125,11 +150,12 @@ CREATE TABLE IF NOT EXISTS transaccion (
   monto_usd REAL NOT NULL DEFAULT 0,
   tasa_oficial REAL NOT NULL DEFAULT 0,
   tasa_paralelo REAL NOT NULL DEFAULT 0,
-  cuenta_id TEXT NOT NULL,
+  cartera_id TEXT NOT NULL,
   saldo_previo REAL NOT NULL DEFAULT 0,
   saldo_posterior REAL NOT NULL DEFAULT 0,
   descripcion TEXT,
-  sub_presupuesto_id TEXT,
+  categoria_id TEXT,
+  categoria_detalle_id TEXT,
   adjunto TEXT,
   fuente_ocr INTEGER NOT NULL DEFAULT 0,
   uso_ahorro_confirmado INTEGER,
@@ -137,7 +163,9 @@ CREATE TABLE IF NOT EXISTS transaccion (
   activa INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  FOREIGN KEY (cuenta_id) REFERENCES cuenta(id) ON DELETE CASCADE
+  FOREIGN KEY (cartera_id) REFERENCES cartera(id) ON DELETE CASCADE,
+  FOREIGN KEY (categoria_id) REFERENCES categoria(id) ON DELETE SET NULL,
+  FOREIGN KEY (categoria_detalle_id) REFERENCES categoria_detalle(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS tasa_bcv (
@@ -164,12 +192,15 @@ CREATE TABLE IF NOT EXISTS tasa_dolarapi (
   PRIMARY KEY (fecha, fuente)
 );
 
-CREATE INDEX IF NOT EXISTS idx_cuenta_activo ON cuenta(activo);
-CREATE INDEX IF NOT EXISTS idx_movimiento_cuenta ON movimiento_cuenta(cuenta_id);
-CREATE INDEX IF NOT EXISTS idx_meta_cuenta_cuenta ON meta_cuenta(cuenta_id);
-CREATE INDEX IF NOT EXISTS idx_subpresupuesto_presupuesto ON subpresupuesto(presupuesto_id);
+CREATE INDEX IF NOT EXISTS idx_cartera_activo ON cartera(activo);
+CREATE INDEX IF NOT EXISTS idx_cartera_espacio ON cartera(espacio_trabajo_id);
+CREATE INDEX IF NOT EXISTS idx_movimiento_cartera ON movimiento_cartera(cartera_id);
+CREATE INDEX IF NOT EXISTS idx_meta_cartera_cartera ON meta_cartera(cartera_id);
+CREATE INDEX IF NOT EXISTS idx_categoria_presupuesto ON categoria(presupuesto_id);
+CREATE INDEX IF NOT EXISTS idx_categoria_detalle_categoria ON categoria_detalle(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_transaccion_fecha ON transaccion(fecha);
-CREATE INDEX IF NOT EXISTS idx_transaccion_cuenta ON transaccion(cuenta_id);
+CREATE INDEX IF NOT EXISTS idx_transaccion_cartera ON transaccion(cartera_id);
+CREATE INDEX IF NOT EXISTS idx_transaccion_categoria ON transaccion(categoria_id);
 CREATE INDEX IF NOT EXISTS idx_tasa_dolarapi_fecha ON tasa_dolarapi(fecha);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_usuario_email ON usuario(email) WHERE email IS NOT NULL;
 `;

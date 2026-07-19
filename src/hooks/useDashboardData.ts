@@ -47,17 +47,17 @@ export const getDashboardData = (
   const gastosCollection = txsDelMes
     .filter((t) => t.tipo === "egreso")
     .reduce<Record<string, { total: number; nombre: string; color: string }>>((acc, t) => {
-      const key = t.subPresupuestoId ?? "otros";
+      const key = t.categoriaId ?? "otros";
       if (!acc[key]) {
-        const sub = presupuesto?.subpresupuestos.find((s) => s.id === t.subPresupuestoId);
-        acc[key] = { total: 0, nombre: sub?.nombre ?? "Otros", color: sub?.color ?? "#9CA3AF" };
+        const cat = presupuesto?.categorias.find((s) => s.id === t.categoriaId);
+        acc[key] = { total: 0, nombre: cat?.nombre ?? "Otros", color: cat?.color ?? "#9CA3AF" };
       }
       acc[key].total += Number(t.montoBs);
       return acc;
     }, {});
 
-  const gastosPorSub = Object.entries(gastosCollection).map(([id, info]) => ({
-    subpresupuestoId: id,
+  const gastosPorCat = Object.entries(gastosCollection).map(([id, info]) => ({
+    categoriaId: id,
     nombre: info.nombre,
     color: info.color,
     gastadoBs: bs(info.total),
@@ -74,7 +74,7 @@ export const getDashboardData = (
       ? Math.min(100, (Number(cobertura.ingresoRealBs) / Number(cobertura.ingresoEsperadoBs ?? 1)) * 100)
       : 0,
     gastadoMesBs: gastosMes,
-    gastosPorSub,
+    gastosPorCat,
     ultimasTransacciones,
   };
 };
