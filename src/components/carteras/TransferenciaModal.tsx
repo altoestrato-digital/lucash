@@ -204,7 +204,7 @@ export default function TransferenciaModal({
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">Tasa de cambio</p>
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    1 {carteraOrigen.moneda} = {tasaResultante > 0 ? tasaResultante.toFixed(4) : "—"} {carteraDestino.moneda}
+                    1 {carteraOrigen.moneda} = {tasaResultante > 0 ? tasaResultante.toFixed(2) : "—"} {carteraDestino.moneda}
                   </span>
                   {tasaDiff !== null && (
                     <span className={`text-xs font-medium ${tasaDiff >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
@@ -214,7 +214,7 @@ export default function TransferenciaModal({
                 </div>
                 {tasaOficial > 0 && (
                   <p className="mt-1 text-xs text-zinc-400">
-                    Oficial: 1 {carteraOrigen.moneda} = {tasaOficial.toFixed(4)} {carteraDestino.moneda}
+                    Oficial: 1 {carteraOrigen.moneda} = {tasaOficial.toFixed(2)} {carteraDestino.moneda}
                   </p>
                 )}
               </div>
