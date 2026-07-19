@@ -8,10 +8,12 @@ export default function CategoriaRow({
   cat,
   onEdit,
   onDelete,
+  onDetalles,
 }: {
   cat: Categoria;
   onEdit: () => void;
   onDelete: () => void;
+  onDetalles: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -79,6 +81,12 @@ export default function CategoriaRow({
               className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
             >
               Editar
+            </button>
+            <button
+              onClick={() => { onDetalles(); setMenuOpen(false); }}
+              className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+            >
+              Detalles
             </button>
             <button
               onClick={() => { onDelete(); setMenuOpen(false); }}

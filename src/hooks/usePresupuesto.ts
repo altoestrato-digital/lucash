@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   Categoria,
+  CategoriaDetalle,
   Presupuesto,
   PresupuestoSnapshot,
 } from "@/types/presupuesto";
-import { presupuestoRepo, snapshotsRepo, categoriasRepo, subscribe, isDBReady } from "@/lib/db";
-import type { CategoriaId } from "@/types/transaccion";
+import { presupuestoRepo, snapshotsRepo, categoriasRepo, categoriaDetallesRepo, subscribe, isDBReady } from "@/lib/db";
+import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { bs } from "@/lib/money";
 
@@ -49,6 +50,22 @@ export function usePresupuesto() {
 
   const softDeleteCategoria = useCallback((id: string) => {
     categoriasRepo.softDelete(id as CategoriaId);
+  }, []);
+
+  const listCategoriaDetalles = useCallback((categoriaId: string): CategoriaDetalle[] => {
+    return categoriaDetallesRepo.listByCategoria(categoriaId);
+  }, []);
+
+  const addCategoriaDetalle = useCallback((data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => {
+    return categoriaDetallesRepo.add(data);
+  }, []);
+
+  const updateCategoriaDetalle = useCallback((id: string, data: Partial<CategoriaDetalle>) => {
+    categoriaDetallesRepo.update(id as CategoriaDetalleId, data);
+  }, []);
+
+  const softDeleteCategoriaDetalle = useCallback((id: string) => {
+    categoriaDetallesRepo.softDelete(id as CategoriaDetalleId);
   }, []);
 
   const cerrarPeriodo = useCallback(() => {
@@ -106,6 +123,10 @@ export function usePresupuesto() {
     addCategoria,
     updateCategoria,
     softDeleteCategoria,
+    listCategoriaDetalles,
+    addCategoriaDetalle,
+    updateCategoriaDetalle,
+    softDeleteCategoriaDetalle,
     cerrarPeriodo,
   };
 }

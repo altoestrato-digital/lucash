@@ -14,12 +14,14 @@ export default function PresupuestoEditor({
   onAddCat,
   onEditCat,
   onDeleteCat,
+  onDetallesCat,
 }: {
   presupuesto: Presupuesto;
   onSave: (data: Partial<Presupuesto>) => void;
   onAddCat: () => void;
   onEditCat: (cat: Categoria) => void;
   onDeleteCat: (id: string) => void;
+  onDetallesCat: (cat: Categoria) => void;
 }) {
   const hoy = toIso(new Date());
 
@@ -172,6 +174,7 @@ export default function PresupuestoEditor({
               cat={cat}
               onEdit={() => onEditCat(cat)}
               onDelete={() => onDeleteCat(cat.id)}
+              onDetalles={() => onDetallesCat(cat)}
             />
           ))}
         {activos.length === 0 && (

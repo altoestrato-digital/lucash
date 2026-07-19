@@ -11,12 +11,13 @@ import { usePreferencias } from "@/hooks/usePreferencias";
 import { toIso } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { useUIStore } from "@/stores/ui";
-import type { Categoria } from "@/types/presupuesto";
+import type { Categoria, CategoriaDetalle } from "@/types/presupuesto";
 import PresupuestoHeader from "@/components/presupuestos/PresupuestoHeader";
 import PresupuestosTabs from "@/components/presupuestos/PresupuestosTabs";
 import PresupuestoResumen from "@/components/presupuestos/PresupuestoResumen";
 import PresupuestoEditor from "@/components/presupuestos/PresupuestoEditor";
 import CategoriaEditor from "@/components/presupuestos/CategoriaEditor";
+import CategoriaDetalleEditor from "@/components/presupuestos/CategoriaDetalleEditor";
 import SnapshotBanner from "@/components/presupuestos/SnapshotBanner";
 
 export default function PresupuestosPage() {
@@ -27,6 +28,10 @@ export default function PresupuestosPage() {
     updateCategoria,
     softDeleteCategoria,
     cerrarPeriodo,
+    listCategoriaDetalles,
+    addCategoriaDetalle,
+    updateCategoriaDetalle,
+    softDeleteCategoriaDetalle,
   } = usePresupuesto();
 
   const pushToast = useUIStore((s) => s.pushToast);
@@ -34,6 +39,9 @@ export default function PresupuestosPage() {
   const [tab, setTab] = useState("Resumen");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Categoria | undefined>(undefined);
+  const [detalleModalOpen, setDetalleModalOpen] = useState(false);
+  const [detalleCategoria, setDetalleCategoria] = useState<Categoria | undefined>(undefined);
+  const [detallesList, setDetallesList] = useState<CategoriaDetalle[]>([]);
 
   const transacciones = useTransacciones();
   const { carteras } = useCarteras();
@@ -79,6 +87,36 @@ export default function PresupuestosPage() {
   const handleDeleteCat = useCallback((id: string) => {
     softDeleteCategoria(id);
   }, [softDeleteCategoria]);
+
+  const handleOpenDetalles = useCallback((cat: Categoria) => {
+    setDetalleCategoria(cat);
+    setDetallesList(listCategoriaDetalles(cat.id));
+    setDetalleModalOpen(true);
+  }, [listCategoriaDetalles]);
+
+  const handleAddDetalle = useCallback((data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => {
+    addCategoriaDetalle(data);
+    if (detalleCategoria) {
+      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
+    }
+    pushToast({ tone: "success", message: "Detalle creado" });
+  }, [addCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
+
+  const handleUpdateDetalle = useCallback((id: string, data: Partial<CategoriaDetalle>) => {
+    updateCategoriaDetalle(id, data);
+    if (detalleCategoria) {
+      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
+    }
+    pushToast({ tone: "success", message: "Detalle actualizado" });
+  }, [updateCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
+
+  const handleDeleteDetalle = useCallback((id: string) => {
+    softDeleteCategoriaDetalle(id);
+    if (detalleCategoria) {
+      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
+    }
+    pushToast({ tone: "success", message: "Detalle eliminado" });
+  }, [softDeleteCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
 
   const handleEmpezarNuevo = useCallback(() => {
     cerrarPeriodo();
@@ -147,6 +185,7 @@ export default function PresupuestosPage() {
             onAddCat={handleAddCat}
             onEditCat={handleEditCat}
             onDeleteCat={handleDeleteCat}
+            onDetallesCat={handleOpenDetalles}
           />
         )}
 
@@ -158,6 +197,17 @@ export default function PresupuestosPage() {
         gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
         onSave={handleSaveCat}
         onClose={() => { setModalOpen(false); setEditingCat(undefined); }}
+      />
+
+      <CategoriaDetalleEditor
+        open={detalleModalOpen}
+        categoriaId={detalleCategoria?.id ?? ""}
+        categoriaNombre={detalleCategoria?.nombre ?? ""}
+        detalles={detallesList}
+        onAdd={handleAddDetalle}
+        onUpdate={handleUpdateDetalle}
+        onDelete={handleDeleteDetalle}
+        onClose={() => { setDetalleModalOpen(false); setDetalleCategoria(undefined); }}
       />
       </div>
     </div>
