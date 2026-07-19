@@ -80,7 +80,8 @@ export default function CarteraCard({ cartera, meta, onEdit, onDelete, onTransfe
                 Editar
               </button>
               <button
-                className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-surface-hover transition-colors"
+                className={`w-full px-4 py-2 text-left text-sm transition-colors ${cartera.saldo <= 0 ? "text-muted cursor-not-allowed" : "text-foreground hover:bg-surface-hover"}`}
+                disabled={cartera.saldo <= 0}
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onTransfer(); }}
               >
                 Transferir

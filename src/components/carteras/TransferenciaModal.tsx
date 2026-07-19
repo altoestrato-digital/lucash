@@ -67,6 +67,8 @@ export default function TransferenciaModal({
 
   if (!open || !carteraOrigen) return null;
 
+  const exceedeSaldo = montoOrigen + comisionOrigen > carteraOrigen.saldo || montoOrigen <= 0;
+
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!carteraDestinoId) e.destino = "Seleccioná una cartera destino";
@@ -270,7 +272,8 @@ export default function TransferenciaModal({
             Cancelar
           </button>
           <button
-            className="flex-1 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors ${exceedeSaldo ? "bg-zinc-400 text-zinc-200 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-500" : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"}`}
+            disabled={exceedeSaldo}
             onClick={handleConfirm}
           >
             Confirmar

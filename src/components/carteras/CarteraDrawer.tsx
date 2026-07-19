@@ -161,7 +161,8 @@ export default function CarteraDrawer({
               </button>
             )}
             <button
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border py-2.5 text-sm font-medium transition-colors ${cartera.saldo <= 0 ? "border-zinc-200 text-zinc-400 cursor-not-allowed dark:border-zinc-700 dark:text-zinc-600" : "border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"}`}
+              disabled={cartera.saldo <= 0}
               onClick={onTransferir}
             >
               <ArrowLeftRight className="h-4 w-4" />
