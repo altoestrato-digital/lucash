@@ -100,8 +100,13 @@ The project spec defines these App Router pages; create them as `src/app/<route>
 
 ### Flujo post-ejecución (después de cada plan completado)
 1. Ejecutar `pnpm lint` y `pnpm build` para verificar.
-2. Generar commit con mensaje descriptivo.
-3. Actualizar en Obsidian:
+2. **Si ambos pasan:**
+   - Generar commit con mensaje descriptivo (formato: `<tipo>: <descripcion corta>`).
+   - Notificar al usuario: "✅ Commit creado: `<hash>` — <mensaje del commit>".
+3. **Si alguno falla:**
+   - NO hacer commit.
+   - Notificar al usuario con el error y corregirlo antes de re-intentar.
+4. Actualizar en Obsidian (solo después de commit exitoso):
    - `00 - Resumen Proyecto.md` — último commit, estado.
    - `01 - Modulos/<modulos afectados>.md` — si cambió la estructura del módulo.
    - `02 - Tablas SQL/*.sql` — si cambió el schema.
