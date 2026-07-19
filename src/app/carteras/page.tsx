@@ -16,6 +16,7 @@ import CarteraEditor from "@/components/carteras/CarteraEditor";
 import CarteraDrawer from "@/components/carteras/CarteraDrawer";
 import MetaEditor from "@/components/carteras/MetaEditor";
 import ConversionModal from "@/components/carteras/ConversionModal";
+import TransferenciaModal from "@/components/carteras/TransferenciaModal";
 
 export default function CarterasPage() {
   const {
@@ -25,7 +26,7 @@ export default function CarterasPage() {
   } = useCarteras();
 
   const resumen = useResumenCarteras(carteras);
-  const { convertir } = useConversion();
+  const { convertir, transferir } = useConversion();
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [tab, setTab] = useState("Todas");
@@ -36,6 +37,8 @@ export default function CarterasPage() {
   const [editingMeta, setEditingMeta] = useState<MetaCartera | undefined>();
   const [metaMoneda, setMetaMoneda] = useState("Bs");
   const [conversionOpen, setConversionOpen] = useState(false);
+  const [transferenciaOpen, setTransferenciaOpen] = useState(false);
+  const [carteraTransferenciaOrigen, setCarteraTransferenciaOrigen] = useState<Cartera | undefined>();
 
   const activas = getCarterasActivas(carteras);
 
@@ -87,6 +90,19 @@ export default function CarterasPage() {
     setConversionOpen(false);
   };
 
+  const handleTransferencia = (data: { carteraDestinoId: string; montoOrigen: number; montoDestino: number; comisionOrigen: number; comisionDestino: number; tasaResultante: number; fecha: string }) => {
+    if (!carteraTransferenciaOrigen) return;
+    const carteraDestino = activas.find((c) => c.id === data.carteraDestinoId);
+    if (!carteraDestino) return;
+    transferir(carteraTransferenciaOrigen, carteraDestino, {
+      ...data,
+      fecha: data.fecha as import("@/lib/dates").ISODateTime,
+    });
+    pushToast({ tone: "success", message: "Transferencia realizada" });
+    setTransferenciaOpen(false);
+    setCarteraTransferenciaOrigen(undefined);
+  };
+
   return (
     <div className="flex flex-col pb-24">
       <CarterasHeader
@@ -110,6 +126,7 @@ export default function CarterasPage() {
               meta={metas.find((m) => m.carteraId === c.id)}
               onEdit={() => { setEditingCartera(c); setEditorOpen(true); }}
               onDelete={() => handleDeleteCartera(c.id)}
+              onTransfer={() => { setCarteraTransferenciaOrigen(c); setTransferenciaOpen(true); }}
               onClick={() => setDrawerCartera(c)}
             />
           ))}
@@ -143,6 +160,7 @@ export default function CarterasPage() {
         onClose={() => setDrawerCartera(undefined)}
         onEdit={() => { setEditingCartera(drawerCartera); setEditorOpen(true); setDrawerCartera(undefined); }}
         onConvertir={() => setConversionOpen(true)}
+        onTransferir={() => { setCarteraTransferenciaOrigen(drawerCartera); setTransferenciaOpen(true); setDrawerCartera(undefined); }}
         onEditMeta={(meta) => { setEditingMeta(meta); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorOpen(true); }}
         onAddMeta={() => { setEditingMeta(undefined); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorOpen(true); }}
         carteras={carteras}
@@ -164,6 +182,15 @@ export default function CarterasPage() {
         carterasDestino={liquidasActivas}
         onConfirm={handleConversion}
         onClose={() => setConversionOpen(false)}
+      />
+
+      <TransferenciaModal
+        key="transferencia-modal"
+        open={transferenciaOpen}
+        carteraOrigen={carteraTransferenciaOrigen!}
+        carterasDestino={activas.filter((c) => c.id !== carteraTransferenciaOrigen?.id)}
+        onConfirm={handleTransferencia}
+        onClose={() => { setTransferenciaOpen(false); setCarteraTransferenciaOrigen(undefined); }}
       />
     </div>
   );

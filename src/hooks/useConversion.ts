@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { movimientosRepo } from "@/lib/db";
 import { toIsoDateTime } from "@/lib/dates";
 import type { Cartera } from "@/types/cartera";
+import type { ISODateTime } from "@/lib/dates";
 
 let conversionIdCounter = 1;
 const genConversionId = () => `conv-${conversionIdCounter++}`;
@@ -47,5 +48,47 @@ export function useConversion() {
     []
   );
 
-  return { convertir };
+  const transferir = useCallback(
+    (
+      carteraOrigen: Cartera,
+      carteraDestino: Cartera,
+      data: {
+        montoOrigen: number;
+        montoDestino: number;
+        comisionOrigen: number;
+        comisionDestino: number;
+        tasaResultante: number;
+        fecha: ISODateTime;
+      }
+    ) => {
+      const conversionId = genConversionId();
+      const descripcion = `Transferencia: ${carteraOrigen.nombre} → ${carteraDestino.nombre}`;
+
+      movimientosRepo.addParConversion(
+        {
+          carteraId: carteraOrigen.id,
+          tipo: "conversion-salida",
+          monto: data.montoOrigen,
+          conversionId,
+          carteraContraparteId: carteraDestino.id,
+          tasaUsdPorMoneda: data.tasaResultante,
+          fecha: data.fecha,
+          descripcion,
+        },
+        {
+          carteraId: carteraDestino.id,
+          tipo: "conversion-entrada",
+          monto: data.montoDestino,
+          conversionId,
+          carteraContraparteId: carteraOrigen.id,
+          tasaUsdPorMoneda: data.tasaResultante,
+          fecha: data.fecha,
+          descripcion,
+        }
+      );
+    },
+    []
+  );
+
+  return { convertir, transferir };
 }

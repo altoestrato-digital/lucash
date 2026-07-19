@@ -4,6 +4,7 @@ import type { Cartera, MetaCartera, MovimientoCartera, TipoCartera } from "@/typ
 import { formatDate, formatDateTime } from "@/lib/dates";
 import MovimientoCarteraList from "./MovimientoCarteraList";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
+import { ArrowLeftRight } from "lucide-react";
 
 interface CarteraDrawerProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface CarteraDrawerProps {
   onClose: () => void;
   onEdit: () => void;
   onConvertir: () => void;
+  onTransferir: () => void;
   onEditMeta: (meta: MetaCartera) => void;
   onAddMeta: () => void;
   carteras: Cartera[];
@@ -33,7 +35,7 @@ const TIPO_ICON_MOV: Record<string, { color: string; label: string }> = {
 };
 
 export default function CarteraDrawer({
-  open, cartera, metas, movimientos, onClose, onEdit, onConvertir,
+  open, cartera, metas, movimientos, onClose, onEdit, onConvertir, onTransferir,
   onEditMeta, onAddMeta, carteras,
 }: CarteraDrawerProps) {
   const { fromCartera } = useMonedaActiva();
@@ -159,7 +161,14 @@ export default function CarteraDrawer({
               </button>
             )}
             <button
-              className={`rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 ${esConvertible ? "flex-1" : "flex-1"}`}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              onClick={onTransferir}
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+              Transferir
+            </button>
+            <button
+              className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
               onClick={onEdit}
             >
               Editar
