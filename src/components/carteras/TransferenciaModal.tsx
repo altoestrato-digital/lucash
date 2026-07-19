@@ -85,6 +85,16 @@ export default function TransferenciaModal({
     return Object.keys(e).length === 0;
   };
 
+  const resetForm = () => {
+    setCarteraDestinoId("");
+    setMontoOrigenInput("");
+    setMontoDestinoInput("");
+    setComisionOrigenInput("");
+    setComisionDestinoInput("");
+    setFecha(toIsoDateTime(new Date()));
+    setErrors({});
+  };
+
   const handleConfirm = () => {
     if (!validate()) return;
     onConfirm({
@@ -96,6 +106,12 @@ export default function TransferenciaModal({
       tasaResultante: esMismaMoneda ? 1 : tasaResultante,
       fecha: fecha as ISODateTime,
     });
+    resetForm();
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onClose();
   };
 
   return (
@@ -267,7 +283,7 @@ export default function TransferenciaModal({
         <div className="mt-6 flex gap-3">
           <button
             className="flex-1 rounded-lg border border-zinc-300 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            onClick={onClose}
+            onClick={handleCancel}
           >
             Cancelar
           </button>
