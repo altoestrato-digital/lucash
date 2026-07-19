@@ -13,7 +13,9 @@ interface CarteraEditorProps {
 
 const COLORS = [
   "#10B981", "#3B82F6", "#8B5CF6", "#F97316",
-  "#6B7280", "#EF4444", "#F59E0B", "#6366F1",
+  "#EF4444", "#F59E0B", "#6366F1", "#EC4899",
+  "#14B8A6", "#60A5FA", "#A78BFA", "#FB923C",
+  "#F87171", "#FBBF24", "#818CF8", "#F472B6",
 ];
 
 export default function CarteraEditor({ open, cartera, onSave, onClose }: CarteraEditorProps) {
@@ -156,7 +158,7 @@ export default function CarteraEditor({ open, cartera, onSave, onClose }: Carter
 
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Color</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {COLORS.map((c) => (
                 <button
                   key={c}
@@ -166,6 +168,25 @@ export default function CarteraEditor({ open, cartera, onSave, onClose }: Carter
                   aria-label={`Color ${c}`}
                 />
               ))}
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <label className="relative h-7 w-7 cursor-pointer">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-zinc-400 text-xs text-zinc-500 dark:border-zinc-500 dark:text-zinc-400 ${color && !COLORS.includes(color) ? "ring-2 ring-zinc-500 ring-offset-2 dark:ring-offset-zinc-900" : ""}`}
+                  style={{ backgroundColor: color && !COLORS.includes(color) ? color : undefined }}
+                >
+                  {color && !COLORS.includes(color) ? "" : "+"}
+                </span>
+              </label>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {color && !COLORS.includes(color) ? color : "Color personalizado"}
+              </span>
             </div>
           </div>
 
