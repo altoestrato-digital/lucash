@@ -6,8 +6,8 @@ import { ChevronDown, Plus, Pencil, Check } from "lucide-react";
 
 interface EspacioTrabajoSelectorProps {
   espacios: EspacioTrabajo[];
-  activoId: string | null;
-  onSelect: (id: string | null) => void;
+  activoId: string;
+  onSelect: (id: string) => void;
   onCrear: () => void;
   onEditar: (espacio: EspacioTrabajo) => void;
 }
@@ -31,7 +31,7 @@ export default function EspacioTrabajoSelector({
   }, [open]);
 
   const activo = espacios.find((e) => e.id === activoId);
-  const label = activo?.nombre ?? "Todos";
+  const label = activo?.nombre ?? "Personal";
 
   return (
     <div className="relative" ref={ref}>
@@ -45,14 +45,6 @@ export default function EspacioTrabajoSelector({
 
       {open && (
         <div className="absolute left-0 top-full mt-2 w-56 rounded-xl bg-white dark:bg-zinc-800 shadow-lg border border-zinc-200 dark:border-zinc-700 z-50 py-1">
-          <button
-            className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${!activoId ? "bg-zinc-100 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100" : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700/50"}`}
-            onClick={() => { onSelect(null); setOpen(false); }}
-          >
-            {!activoId && <Check className="h-4 w-4 text-emerald-500" />}
-            <span className={!activoId ? "" : "ml-6"}>Todos</span>
-          </button>
-
           {espacios.map((e) => (
             <div key={e.id} className="flex items-center group">
               <button

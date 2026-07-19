@@ -71,7 +71,7 @@ export function useTransacciones(filtrarPorEspacio = true): Transaccion[] {
 
   const carterasIds = new Set(
     carterasAll
-      .filter((c) => c.espacioTrabajoId === espacioId || c.espacioTrabajoId == null)
+      .filter((c) => c.espacioTrabajoId === espacioId)
       .map((c) => c.id),
   );
   return transaccionesAll.filter((tx) => carterasIds.has(tx.carteraId));

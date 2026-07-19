@@ -30,7 +30,7 @@ export function usePresupuesto(filtrarPorEspacio = true) {
   }, []);
 
   const presupuesto = espacioId
-    ? presupuestoAll && (presupuestoAll.espacioTrabajoId === espacioId || presupuestoAll.espacioTrabajoId == null)
+    ? presupuestoAll && presupuestoAll.espacioTrabajoId === espacioId
       ? presupuestoAll
       : null
     : presupuestoAll;

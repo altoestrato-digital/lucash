@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Cartera, CarteraInput, TipoCartera, Moneda, ObjetivoCartera } from "@/types/cartera";
 import { MONEDAS_POR_TIPO } from "@/types/cartera";
+import { usePreferencias } from "@/hooks/usePreferencias";
 
 interface CarteraEditorProps {
   open: boolean;
@@ -19,6 +20,7 @@ const COLORS = [
 ];
 
 export default function CarteraEditor({ open, cartera, onSave, onClose }: CarteraEditorProps) {
+  const { preferencias } = usePreferencias();
   const [nombre, setNombre] = useState(cartera?.nombre ?? "");
   const [tipo, setTipo] = useState<TipoCartera>(cartera?.tipo ?? "efectivo");
   const [moneda, setMoneda] = useState<Moneda>(cartera?.moneda ?? "Bs");
@@ -59,6 +61,7 @@ export default function CarteraEditor({ open, cartera, onSave, onClose }: Carter
       objetivo,
       color,
       activo,
+      espacioTrabajoId: cartera?.espacioTrabajoId ?? preferencias.espacioTrabajoId,
     });
   };
 

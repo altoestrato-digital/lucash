@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCarteras } from "@/hooks/useCarteras";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
@@ -37,15 +37,32 @@ export default function DashboardPage() {
   const dashboardData = useDashboardData(carteras, presupuesto, transacciones);
   const [drawerTx, setDrawerTx] = useState<Transaccion | null>(null);
 
-  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => espacioTrabajoRepo.list());
+  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => {
+    const lista = espacioTrabajoRepo.list();
+    if (lista.length === 0) {
+      const personal = espacioTrabajoRepo.create({ nombre: "Personal", esDefault: true, monedaDefault: "Bs" });
+      return [personal];
+    }
+    return lista;
+  });
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEspacio, setEditingEspacio] = useState<EspacioTrabajo | undefined>();
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    if (!preferencias.espacioTrabajoId && espacios.length > 0) {
+      setEspacioTrabajoId(espacios[0].id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refreshEspacios = useCallback(() => {
     setEspacios(espacioTrabajoRepo.list());
   }, []);
 
-  const handleSelectEspacio = useCallback((id: string | null) => {
+  const handleSelectEspacio = useCallback((id: string) => {
     setEspacioTrabajoId(id);
   }, [setEspacioTrabajoId]);
 

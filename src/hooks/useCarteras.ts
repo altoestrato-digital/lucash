@@ -31,7 +31,7 @@ export function useCarteras(filtrarPorEspacio = true) {
   }, []);
 
   const carteras = espacioId
-    ? carterasAll.filter((c) => c.espacioTrabajoId === espacioId || c.espacioTrabajoId == null)
+    ? carterasAll.filter((c) => c.espacioTrabajoId === espacioId)
     : carterasAll;
 
   const addCartera = useCallback((c: CarteraInput): Cartera => {

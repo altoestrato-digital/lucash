@@ -46,7 +46,7 @@ export function usePreferencias() {
     updatePerfil({ preferencias: { ...preferencias, coberturaModo: v } });
   }, [preferencias, updatePerfil]);
 
-  const setEspacioTrabajoId = useCallback((v: string | null) => {
+  const setEspacioTrabajoId = useCallback((v: string) => {
     updatePerfil({ preferencias: { ...preferencias, espacioTrabajoId: v } });
   }, [preferencias, updatePerfil]);
 
