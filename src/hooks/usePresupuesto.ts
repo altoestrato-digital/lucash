@@ -11,19 +11,29 @@ import { presupuestoRepo, snapshotsRepo, categoriasRepo, categoriaDetallesRepo, 
 import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { bs } from "@/lib/money";
+import { usePreferencias } from "@/hooks/usePreferencias";
 
-export function usePresupuesto() {
-  const [presupuesto, setPresupuesto] = useState<Presupuesto | null>(() =>
+export function usePresupuesto(filtrarPorEspacio = true) {
+  const { preferencias } = usePreferencias();
+  const espacioId = filtrarPorEspacio ? preferencias.espacioTrabajoId : null;
+
+  const [presupuestoAll, setPresupuestoAll] = useState<Presupuesto | null>(() =>
     presupuestoRepo.getActual(),
   );
   const [snapshots, setSnapshots] = useState<PresupuestoSnapshot[]>(() => snapshotsRepo.list());
 
   useEffect(() => {
     return subscribe(() => {
-      setPresupuesto(presupuestoRepo.getActual());
+      setPresupuestoAll(presupuestoRepo.getActual());
       setSnapshots(snapshotsRepo.list());
     });
   }, []);
+
+  const presupuesto = espacioId
+    ? presupuestoAll && (presupuestoAll.espacioTrabajoId === espacioId || presupuestoAll.espacioTrabajoId == null)
+      ? presupuestoAll
+      : null
+    : presupuestoAll;
 
   const updatePresupuesto = useCallback((data: Partial<Presupuesto>) => {
     if (!isDBReady()) return;

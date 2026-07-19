@@ -12,19 +12,27 @@ import type {
   MovimientoCarteraId,
 } from "@/types/cartera";
 import { carterasRepo, metasRepo, movimientosRepo, subscribe } from "@/lib/db";
+import { usePreferencias } from "@/hooks/usePreferencias";
 
-export function useCarteras() {
-  const [carteras, setCarteras] = useState<Cartera[]>(() => carterasRepo.list());
+export function useCarteras(filtrarPorEspacio = true) {
+  const { preferencias } = usePreferencias();
+  const espacioId = filtrarPorEspacio ? preferencias.espacioTrabajoId : null;
+
+  const [carterasAll, setCarterasAll] = useState<Cartera[]>(() => carterasRepo.list());
   const [metas, setMetas] = useState<MetaCartera[]>(() => metasRepo.list());
   const [movimientos, setMovimientos] = useState<MovimientoCartera[]>(() => movimientosRepo.list());
 
   useEffect(() => {
     return subscribe(() => {
-      setCarteras(carterasRepo.list());
+      setCarterasAll(carterasRepo.list());
       setMetas(metasRepo.list());
       setMovimientos(movimientosRepo.list());
     });
   }, []);
+
+  const carteras = espacioId
+    ? carterasAll.filter((c) => c.espacioTrabajoId === espacioId || c.espacioTrabajoId == null)
+    : carterasAll;
 
   const addCartera = useCallback((c: CarteraInput): Cartera => {
     return carterasRepo.add(c);

@@ -4,9 +4,10 @@ import { useMemo, useCallback, useEffect, useState } from "react";
 import type { Transaccion } from "@/types/transaccion";
 import type { FiltroHistorial, ResumenHistorial, Periodo } from "@/types/historial";
 import type { Money } from "@/lib/money";
-import { transaccionesRepo, subscribe } from "@/lib/db";
+import { transaccionesRepo, carterasRepo, subscribe } from "@/lib/db";
 import { sum, sub, bs, usd } from "@/lib/money";
 import type { Presupuesto } from "@/types/presupuesto";
+import { usePreferencias } from "@/hooks/usePreferencias";
 
 const FILTROS_KEY = "lucash:filtros-historial";
 
@@ -53,12 +54,27 @@ function loadFiltro(): FiltroHistorial {
   return filtroDefault;
 }
 
-export function useTransacciones(): Transaccion[] {
-  const [transacciones, setTransacciones] = useState<Transaccion[]>(() => transaccionesRepo.list());
+export function useTransacciones(filtrarPorEspacio = true): Transaccion[] {
+  const { preferencias } = usePreferencias();
+  const espacioId = filtrarPorEspacio ? preferencias.espacioTrabajoId : null;
+  const [transaccionesAll, setTransaccionesAll] = useState<Transaccion[]>(() => transaccionesRepo.list());
+  const [carterasAll, setCarterasAll] = useState(() => carterasRepo.list());
+
   useEffect(() => {
-    return subscribe(() => setTransacciones(transaccionesRepo.list()));
+    return subscribe(() => {
+      setTransaccionesAll(transaccionesRepo.list());
+      setCarterasAll(carterasRepo.list());
+    });
   }, []);
-  return transacciones;
+
+  if (!espacioId) return transaccionesAll;
+
+  const carterasIds = new Set(
+    carterasAll
+      .filter((c) => c.espacioTrabajoId === espacioId || c.espacioTrabajoId == null)
+      .map((c) => c.id),
+  );
+  return transaccionesAll.filter((tx) => carterasIds.has(tx.carteraId));
 }
 
 export function useHistorial(presupuesto: Presupuesto | null) {

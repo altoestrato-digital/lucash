@@ -42,9 +42,17 @@ export const usuariosRepo = {
   },
 
   update(id: UsuarioId, data: Partial<UsuarioInput>): Usuario {
-    const current = usuariosRepo.getById(id);
+    let current = usuariosRepo.getById(id);
     if (!current) {
-      throw new Error(`Usuario ${id} no existe.`);
+      current = usuariosRepo.getActivo();
+      const db = getDB();
+      const now = new Date().toISOString();
+      db.run(
+        `INSERT OR IGNORE INTO usuario (id, nombre, email, contrasena_hash, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [current.id, current.nombre, current.email ?? null, current.contrasenaHash, current.createdAt, now],
+      );
+      persist();
     }
     const now = new Date().toISOString();
     const merged: Usuario = {

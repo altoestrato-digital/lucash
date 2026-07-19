@@ -28,6 +28,7 @@ function rowToCartera(row: Row): Cartera {
     objetivo: row.objetivo as Cartera["objetivo"],
     color: row.color as string,
     activo: Boolean(row.activo),
+    espacioTrabajoId: (row.espacio_trabajo_id as string | null) ?? undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -36,7 +37,7 @@ function rowToCartera(row: Row): Cartera {
 function rowToMeta(row: Row): MetaCartera {
   return {
     id: row.id as MetaCarteraId,
-    carteraId: row.cuenta_id as CarteraId,
+    carteraId: row.cartera_id as CarteraId,
     nombre: row.nombre as string,
     montoObjetivo: row.monto_objetivo as number,
     fechaMeta: ((row.fecha_meta as string | null) ?? undefined) as ISODate | undefined,
@@ -50,14 +51,14 @@ function rowToMeta(row: Row): MetaCartera {
 function rowToMovimiento(row: Row): MovimientoCartera {
   return {
     id: row.id as MovimientoCarteraId,
-    carteraId: row.cuenta_id as CarteraId,
+    carteraId: row.cartera_id as CarteraId,
     tipo: row.tipo as MovimientoCartera["tipo"],
     monto: row.monto as number,
-    monedaCartera: (row.moneda_cuenta as MovimientoCartera["monedaCartera"]) ?? "Bs",
+    monedaCartera: (row.moneda_cartera as MovimientoCartera["monedaCartera"]) ?? "Bs",
     saldoPrevio: (row.saldo_previo as number) ?? 0,
     saldoPosterior: (row.saldo_posterior as number) ?? 0,
     conversionId: ((row.conversion_id as string | null) ?? undefined) as MovimientoCartera["conversionId"],
-    carteraContraparteId: ((row.cuenta_contraparte_id as CarteraId | null) ?? undefined) as MovimientoCartera["carteraContraparteId"],
+    carteraContraparteId: ((row.cartera_contraparte_id as CarteraId | null) ?? undefined) as MovimientoCartera["carteraContraparteId"],
     tasaUsdPorMoneda: (row.tasa_usd_por_moneda as number | null) ?? undefined,
     fecha: row.fecha as ISODateTime,
     descripcion: (row.descripcion as string | null) ?? undefined,
@@ -73,7 +74,7 @@ const genId = (prefix: string) => `${prefix}-${Date.now()}-${idCounter++}`;
 
 function calcularSaldoEfectivo(carteraId: string): number {
   return queryOne(
-    "SELECT saldo FROM cuenta WHERE id = ?",
+    "SELECT saldo FROM cartera WHERE id = ?",
     [carteraId],
     (row) => (row.saldo as number) ?? 0,
   ) ?? 0;
@@ -82,11 +83,11 @@ function calcularSaldoEfectivo(carteraId: string): number {
 function syncCarteraSaldo(carteraId: string, delta: number): void {
   const db = getDB();
   const now = new Date().toISOString();
-  db.run("UPDATE cuenta SET saldo = saldo + ?, updated_at = ? WHERE id = ?", [delta, now, carteraId]);
+  db.run("UPDATE cartera SET saldo = saldo + ?, updated_at = ? WHERE id = ?", [delta, now, carteraId]);
 }
 
 function leerMonedaCartera(db: Database, carteraId: string): MovimientoCartera["monedaCartera"] {
-  const stmt = db.prepare("SELECT moneda FROM cuenta WHERE id = ?");
+  const stmt = db.prepare("SELECT moneda FROM cartera WHERE id = ?");
   stmt.bind([carteraId]);
   let moneda: MovimientoCartera["monedaCartera"] = "Bs";
   if (stmt.step()) {
@@ -98,7 +99,7 @@ function leerMonedaCartera(db: Database, carteraId: string): MovimientoCartera["
 
 export const carterasRepo = {
   list(): Cartera[] {
-    return queryAll("SELECT * FROM cuenta ORDER BY created_at", [], rowToCartera);
+    return queryAll("SELECT * FROM cartera ORDER BY created_at", [], rowToCartera);
   },
 
   add(c: CarteraInput): Cartera {
@@ -113,8 +114,8 @@ export const carterasRepo = {
     };
     const db = getDB();
     db.run(
-      `INSERT INTO cuenta (id, usuario_id, nombre, tipo, moneda, saldo, objetivo, color, activo, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO cartera (id, usuario_id, nombre, tipo, moneda, saldo, objetivo, color, activo, espacio_trabajo_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nueva.id,
         nueva.usuarioId,
@@ -125,6 +126,7 @@ export const carterasRepo = {
         nueva.objetivo,
         nueva.color,
         nueva.activo ? 1 : 0,
+        nueva.espacioTrabajoId ?? null,
         nueva.createdAt,
         nueva.updatedAt,
       ],
@@ -141,8 +143,8 @@ export const carterasRepo = {
     const merged = { ...current, ...data };
     const now = new Date().toISOString();
     db.run(
-      `UPDATE cuenta
-       SET usuario_id = ?, nombre = ?, tipo = ?, moneda = ?, saldo = ?, objetivo = ?, color = ?, activo = ?, updated_at = ?
+      `UPDATE cartera
+       SET usuario_id = ?, nombre = ?, tipo = ?, moneda = ?, saldo = ?, objetivo = ?, color = ?, activo = ?, espacio_trabajo_id = ?, updated_at = ?
        WHERE id = ?`,
       [
         merged.usuarioId,
@@ -153,6 +155,7 @@ export const carterasRepo = {
         merged.objetivo,
         merged.color,
         merged.activo ? 1 : 0,
+        merged.espacioTrabajoId ?? null,
         now,
         id,
       ],
@@ -164,7 +167,7 @@ export const carterasRepo = {
   softDelete(id: CarteraId): void {
     const db = getDB();
     const now = new Date().toISOString();
-    db.run("UPDATE cuenta SET activo = 0, updated_at = ? WHERE id = ?", [now, id]);
+    db.run("UPDATE cartera SET activo = 0, updated_at = ? WHERE id = ?", [now, id]);
     persist();
     notifyChange();
   },
@@ -172,7 +175,7 @@ export const carterasRepo = {
 
 export const metasRepo = {
   list(): MetaCartera[] {
-    return queryAll("SELECT * FROM meta_cuenta", [], rowToMeta);
+    return queryAll("SELECT * FROM meta_cartera", [], rowToMeta);
   },
 
   add(m: MetaCarteraInput): MetaCartera {
@@ -180,7 +183,7 @@ export const metasRepo = {
     const nueva: MetaCartera = { ...m, id: genId("meta") as MetaCarteraId, createdAt: now, updatedAt: now };
     const db = getDB();
     db.run(
-      `INSERT INTO meta_cuenta (id, cuenta_id, nombre, monto_objetivo, fecha_meta, notas, cumplida_at, created_at, updated_at)
+      `INSERT INTO meta_cartera (id, cartera_id, nombre, monto_objetivo, fecha_meta, notas, cumplida_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nueva.id,
@@ -206,8 +209,8 @@ export const metasRepo = {
     const merged = { ...current, ...data };
     const now = new Date().toISOString();
     db.run(
-      `UPDATE meta_cuenta
-       SET cuenta_id = ?, nombre = ?, monto_objetivo = ?, fecha_meta = ?, notas = ?, cumplida_at = ?, updated_at = ?
+      `UPDATE meta_cartera
+       SET cartera_id = ?, nombre = ?, monto_objetivo = ?, fecha_meta = ?, notas = ?, cumplida_at = ?, updated_at = ?
        WHERE id = ?`,
       [
         merged.carteraId,
@@ -226,7 +229,7 @@ export const metasRepo = {
 
   delete(id: MetaCarteraId): void {
     const db = getDB();
-    db.run("DELETE FROM meta_cuenta WHERE id = ?", [id]);
+    db.run("DELETE FROM meta_cartera WHERE id = ?", [id]);
     persist();
     notifyChange();
   },
@@ -254,9 +257,9 @@ function insertMovimiento(db: Database, m: MovimientoDraft): MovimientoCartera {
   };
 
   db.run(
-    `INSERT INTO movimiento_cuenta
-     (id, cuenta_id, tipo, monto, moneda_cuenta, saldo_previo, saldo_posterior,
-      conversion_id, cuenta_contraparte_id, tasa_usd_por_moneda,
+    `INSERT INTO movimiento_cartera
+     (id, cartera_id, tipo, monto, moneda_cartera, saldo_previo, saldo_posterior,
+      conversion_id, cartera_contraparte_id, tasa_usd_por_moneda,
       fecha, descripcion, es_redireccion_excedente, transaccion_origen_id, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -284,7 +287,7 @@ function insertMovimiento(db: Database, m: MovimientoDraft): MovimientoCartera {
 
 export const movimientosRepo = {
   list(): MovimientoCartera[] {
-    return queryAll("SELECT * FROM movimiento_cuenta ORDER BY created_at", [], rowToMovimiento);
+    return queryAll("SELECT * FROM movimiento_cartera ORDER BY created_at", [], rowToMovimiento);
   },
 
   calcularSaldo(carteraId: string): number {

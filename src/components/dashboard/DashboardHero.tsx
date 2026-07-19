@@ -22,14 +22,14 @@ export default function DashboardHero({ nombre, children }: DashboardHeroProps) 
       <div className="absolute top-1/2 right-1/4 h-40 w-40 rounded-full bg-white/3" />
 
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-            <Wallet className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-emerald-100">{fecha}</p>
-          </div>
+        <div className="flex items-center justify-between mb-2">
           {children}
+        </div>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+            <Wallet className="h-5 w-5 text-white" />
+          </div>
+          <p className="text-sm text-emerald-100">{fecha}</p>
         </div>
 
         <h1 suppressHydrationWarning className="text-3xl font-bold text-white mb-1">

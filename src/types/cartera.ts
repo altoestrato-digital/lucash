@@ -20,6 +20,7 @@ export interface Cartera {
   objetivo: ObjetivoCartera;
   color: string;
   activo: boolean;
+  espacioTrabajoId?: string;
   createdAt: string;
   updatedAt: string;
 }
