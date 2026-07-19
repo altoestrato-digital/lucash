@@ -17,6 +17,7 @@ export interface Preferencias {
   idioma: Idioma;
   fuenteTasa: FuenteTasaPreferida;
   coberturaModo: CoberturaModo;
+  espacioTrabajoId: string | null;
 }
 
 export interface Perfil {
@@ -38,6 +39,7 @@ export const PREFERENCIAS_DEFAULT: Preferencias = {
   idioma: "es",
   fuenteTasa: "oficial",
   coberturaModo: "ingreso-esperado",
+  espacioTrabajoId: null,
 };
 
 export const PERFIL_SEED: Perfil = {

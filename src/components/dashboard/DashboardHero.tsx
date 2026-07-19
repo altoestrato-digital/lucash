@@ -6,9 +6,10 @@ import { ArrowRight } from "lucide-react";
 
 interface DashboardHeroProps {
   nombre: string;
+  children?: React.ReactNode;
 }
 
-export default function DashboardHero({ nombre }: DashboardHeroProps) {
+export default function DashboardHero({ nombre, children }: DashboardHeroProps) {
   const saludo = nombre ? `Hola, ${nombre}` : "Hola, Lucash";
   const now = new Date();
   const fecha = now.toLocaleDateString("es-VE", { weekday: "long", month: "long", day: "numeric" });
@@ -25,9 +26,10 @@ export default function DashboardHero({ nombre }: DashboardHeroProps) {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
             <Wallet className="h-6 w-6 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-emerald-100">{fecha}</p>
           </div>
+          {children}
         </div>
 
         <h1 suppressHydrationWarning className="text-3xl font-bold text-white mb-1">

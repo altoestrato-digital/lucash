@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCarteras } from "@/hooks/useCarteras";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
 import { usePerfil } from "@/hooks/usePerfil";
+import { usePreferencias } from "@/hooks/usePreferencias";
+import { espacioTrabajoRepo } from "@/lib/db";
 import { bs, usd, type Money } from "@/lib/money";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTransacciones } from "@/hooks/useHistorial";
@@ -12,6 +14,7 @@ import { esLiquida } from "@/types/cartera";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import type { Transaccion } from "@/types/transaccion";
+import type { EspacioTrabajo } from "@/types/espacio-trabajo";
 import DashboardHero from "@/components/dashboard/DashboardHero";
 import DashboardKpis from "@/components/dashboard/DashboardKpis";
 import SpendingChart from "@/components/dashboard/SpendingChart";
@@ -19,6 +22,8 @@ import BudgetDonut from "@/components/dashboard/BudgetDonut";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import QuickTest from "@/components/dashboard/QuickTest";
 import IncomeExpenseChart from "@/components/dashboard/IncomeExpenseChart";
+import EspacioTrabajoSelector from "@/components/dashboard/EspacioTrabajoSelector";
+import EspacioTrabajoEditor from "@/components/dashboard/EspacioTrabajoEditor";
 import TransaccionDrawer from "@/components/historial/TransaccionDrawer";
 
 export default function DashboardPage() {
@@ -27,9 +32,44 @@ export default function DashboardPage() {
   const { presupuesto } = usePresupuesto();
   const { perfil } = usePerfil();
   const transacciones = useTransacciones();
+  const { preferencias, setEspacioTrabajoId } = usePreferencias();
 
   const dashboardData = useDashboardData(carteras, presupuesto, transacciones);
   const [drawerTx, setDrawerTx] = useState<Transaccion | null>(null);
+
+  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => espacioTrabajoRepo.list());
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingEspacio, setEditingEspacio] = useState<EspacioTrabajo | undefined>();
+
+  const refreshEspacios = useCallback(() => {
+    setEspacios(espacioTrabajoRepo.list());
+  }, []);
+
+  const handleSelectEspacio = useCallback((id: string | null) => {
+    setEspacioTrabajoId(id);
+  }, [setEspacioTrabajoId]);
+
+  const handleCrearEspacio = useCallback(() => {
+    setEditingEspacio(undefined);
+    setEditorOpen(true);
+  }, []);
+
+  const handleEditarEspacio = useCallback((e: EspacioTrabajo) => {
+    setEditingEspacio(e);
+    setEditorOpen(true);
+  }, []);
+
+  const handleSaveEspacio = useCallback((data: { nombre: string; monedaDefault: import("@/types/cartera").Moneda }) => {
+    if (editingEspacio) {
+      espacioTrabajoRepo.update(editingEspacio.id, data);
+    } else {
+      const nuevo = espacioTrabajoRepo.create({ ...data, esDefault: false });
+      setEspacioTrabajoId(nuevo.id);
+    }
+    refreshEspacios();
+    setEditorOpen(false);
+    setEditingEspacio(undefined);
+  }, [editingEspacio, setEspacioTrabajoId, refreshEspacios]);
 
   const carterasNoLiquidas = carteras.filter((c) => c.activo && !esLiquida(c));
   const activas = carteras.filter((c) => c.activo);
@@ -47,7 +87,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHero nombre={perfil.nombre} />
+      <DashboardHero nombre={perfil.nombre}>
+        <EspacioTrabajoSelector
+          espacios={espacios}
+          activoId={preferencias.espacioTrabajoId}
+          onSelect={handleSelectEspacio}
+          onCrear={handleCrearEspacio}
+          onEditar={handleEditarEspacio}
+        />
+      </DashboardHero>
 
       <div className="relative -mt-8 z-10">
         <DashboardKpis
@@ -104,6 +152,13 @@ export default function DashboardPage() {
         open={!!drawerTx}
         transaccion={drawerTx}
         onClose={() => setDrawerTx(null)}
+      />
+
+      <EspacioTrabajoEditor
+        open={editorOpen}
+        espacio={editingEspacio}
+        onSave={handleSaveEspacio}
+        onClose={() => { setEditorOpen(false); setEditingEspacio(undefined); }}
       />
     </div>
   );

@@ -46,8 +46,12 @@ export function usePreferencias() {
     updatePerfil({ preferencias: { ...preferencias, coberturaModo: v } });
   }, [preferencias, updatePerfil]);
 
+  const setEspacioTrabajoId = useCallback((v: string | null) => {
+    updatePerfil({ preferencias: { ...preferencias, espacioTrabajoId: v } });
+  }, [preferencias, updatePerfil]);
+
   return {
     preferencias,
-    setMoneda, setFormatoFecha, setInicioSemana, setTema, setIdioma, setCoberturaModo,
+    setMoneda, setFormatoFecha, setInicioSemana, setTema, setIdioma, setCoberturaModo, setEspacioTrabajoId,
   };
 }
