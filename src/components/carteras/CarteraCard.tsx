@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { Cartera, MetaCartera, TipoCartera } from "@/types/cartera";
-import { MoreVertical, ArrowLeftRight } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import ColorBorderCard from "@/components/shared/ColorBorderCard";
 import MoneyDisplay from "@/components/shared/MoneyDisplay";
 
@@ -80,10 +80,9 @@ export default function CarteraCard({ cartera, meta, onEdit, onDelete, onTransfe
                 Editar
               </button>
               <button
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-foreground hover:bg-surface-hover transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-surface-hover transition-colors"
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onTransfer(); }}
               >
-                <ArrowLeftRight className="h-3.5 w-3.5" />
                 Transferir
               </button>
               <button
