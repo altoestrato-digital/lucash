@@ -40,9 +40,9 @@ export const calcularCobertura = (
     const ingresoReal = Number(ingresoRealBs);
     if (Number(gastadoBs) > limiteBsValue) {
       estado = "excedido";
-    } else if (ingresoReal >= limiteBsValue) {
+    } else if (limiteBsValue > 0 && ingresoReal >= limiteBsValue) {
       estado = "cubierto";
-    } else if (ingresoReal >= Number(gastadoBs)) {
+    } else if (ingresoReal > 0 && ingresoReal >= Number(gastadoBs)) {
       estado = "parcial";
     } else {
       estado = "no-cubierto";
@@ -101,14 +101,16 @@ export const calcularCobertura = (
       categoriaNombres: [],
     });
   } else {
+    const isRealGap = (pc: CoberturaCategoria) =>
+      Number(pc.faltanBs) > 0 || Number(pc.excedidoBs) > 0;
     const p1NoCubiertas = porCat.filter(
-      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 1
+      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 1 && isRealGap(pc)
     );
     const p2NoCubiertas = porCat.filter(
-      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 2
+      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 2 && isRealGap(pc)
     );
     const p3NoCubiertas = porCat.filter(
-      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 3
+      (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 3 && isRealGap(pc)
     );
 
     const buildAlerta = (
@@ -151,16 +153,26 @@ export const calcularCobertura = (
     }
 
     if (alertas.length === 0) {
-      estadoGlobal = "todo-cubierto";
-      const sobrante = bs(Math.max(0, Number(disponibleBs) - totalLimitesBs));
-      alertas.push({
-        id: nextId(),
-        tipo: "todo-cubierto",
-        prioridad: null,
-        montoBs: sobrante,
-        monedaDefault: "Bs",
-        categoriaNombres: [],
-      });
+      // Solo emitimos "todo-cubierto" si hay actividad real: ingresos > 0
+      // o categorías con gap. Si no hay nada, el presupuesto está vacío
+      // y el banner queda en silencio.
+      const tieneActividad = Number(ingresoRealBs) > 0
+        || Number(gastoTotalBs) > 0
+        || activos.length > 0;
+      if (!tieneActividad) {
+        estadoGlobal = "todo-cubierto";
+      } else {
+        estadoGlobal = "todo-cubierto";
+        const sobrante = bs(Math.max(0, Number(disponibleBs) - totalLimitesBs));
+        alertas.push({
+          id: nextId(),
+          tipo: "todo-cubierto",
+          prioridad: null,
+          montoBs: sobrante,
+          monedaDefault: "Bs",
+          categoriaNombres: [],
+        });
+      }
     } else if (!p1NoCubiertas.length) {
       if (p2NoCubiertas.length > 0) {
         estadoGlobal = "falta-p2";

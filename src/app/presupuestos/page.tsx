@@ -64,6 +64,13 @@ export default function PresupuestosPage() {
 
   // `version` fuerza re-derivación cuando cualquier tabla de la DB cambia,
   // aunque el `presupuesto` no haya cambiado (ej: al agregar un detalle).
+  const otrasCategoriasLimitesBs = useMemo(() => {
+    if (!presupuesto || !detalleCategoria) return 0;
+    return presupuesto.categorias
+      .filter((c) => c.activo && c.id !== detalleCategoria.id)
+      .reduce((acc, c) => acc + Number(convertirAMoneyValues(Number(c.limite), c.limiteMoneda, hoy).bs), 0);
+  }, [presupuesto, detalleCategoria, hoy]);
+
   const detallesMap = useMemo(() => {
     if (!presupuesto) return {};
     const map: Record<string, CategoriaDetalle[]> = {};
@@ -225,11 +232,15 @@ export default function PresupuestosPage() {
         categoriaLimite={detalleCategoria?.limite ?? bs(0)}
         categoriaLimiteMoneda={detalleCategoria?.limiteMoneda ?? "Bs"}
         monedaDefault={preferencias.moneda}
+        gastoMaximoEsperado={Number(presupuesto?.gastoMaximoEsperado ?? 0)}
+        gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
+        otrasCategoriasLimitesBs={otrasCategoriasLimitesBs}
         detalles={detallesList}
         onAdd={handleAddDetalle}
         onUpdate={handleUpdateDetalle}
         onDelete={handleDeleteDetalle}
         onUpdateCategoria={(id, data) => updateCategoria(id, data)}
+        onUpdatePresupuesto={(data) => updatePresupuesto({ ...data, gastoMaximoEsperado: data.gastoMaximoEsperadoMoneda === "USD" ? usd(data.gastoMaximoEsperado) : bs(data.gastoMaximoEsperado) })}
         onClose={() => { setDetalleModalOpen(false); setDetalleCategoria(undefined); }}
       />
       </div>

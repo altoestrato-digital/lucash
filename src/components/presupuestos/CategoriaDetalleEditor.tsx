@@ -23,11 +23,15 @@ interface CategoriaDetalleEditorProps {
   categoriaLimite: Money;
   categoriaLimiteMoneda: MonedaBudget;
   monedaDefault: MonedaBudget;
+  gastoMaximoEsperado: number;
+  gastoMaximoEsperadoMoneda: MonedaBudget;
+  otrasCategoriasLimitesBs: number;
   detalles: CategoriaDetalle[];
   onAdd: (data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => void;
   onUpdate: (id: string, data: Partial<CategoriaDetalle>) => void;
   onDelete: (id: string) => void;
   onUpdateCategoria?: (id: string, data: Partial<Categoria>) => void;
+  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
   onClose: () => void;
 }
 
@@ -40,16 +44,25 @@ export default function CategoriaDetalleEditor({
   categoriaLimite,
   categoriaLimiteMoneda,
   monedaDefault,
+  gastoMaximoEsperado,
+  gastoMaximoEsperadoMoneda,
+  otrasCategoriasLimitesBs,
   detalles,
   onAdd,
   onUpdate,
   onDelete,
   onUpdateCategoria,
+  onUpdatePresupuesto,
   onClose,
 }: CategoriaDetalleEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [pendingSave, setPendingSave] = useState<{
+    totalBs: Money;
+    nuevoLimiteCategoriaBs: Money;
+    excedenteMaximoBs: Money;
+  } | null>(null);
   const [nombre, setNombre] = useState("");
   const [montoInput, setMontoInput] = useState("");
   const [moneda, setMoneda] = useState<MonedaBudget>(monedaDefault);
@@ -91,7 +104,35 @@ export default function CategoriaDetalleEditor({
 
   const limiteBs = convertirAMoneyValues(Number(categoriaLimite), categoriaLimiteMoneda, hoy).bs;
 
-  if (!open) return null;
+  const doSaveDetalle = (data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => {
+    if (editingId) {
+      onUpdate(editingId, data);
+    } else {
+      onAdd(data);
+    }
+  };
+
+  const applyUpdates = (
+    data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string },
+    totalBsSave: Money,
+    excedente: number,
+    excedenteMaximo: number,
+  ) => {
+    doSaveDetalle(data);
+    if (excedente > 0 && onUpdateCategoria) {
+      onUpdateCategoria(categoriaId, {
+        limite: totalBsSave,
+        limiteMoneda: "Bs",
+      });
+    }
+    if (excedenteMaximo > 0 && onUpdatePresupuesto) {
+      const totalConCategoria = otrasCategoriasLimitesBs + Number(totalBsSave);
+      onUpdatePresupuesto({
+        gastoMaximoEsperado: gastoMaximoEsperadoMoneda === "USD" ? Number(convertirAMoneyValues(totalConCategoria, "Bs", hoy).usd) : totalConCategoria,
+        gastoMaximoEsperadoMoneda,
+      });
+    }
+  };
 
   const handleSave = () => {
     if (!nombre.trim() || !montoInput) return;
@@ -107,27 +148,50 @@ export default function CategoriaDetalleEditor({
 
     const totalBsSave = calcTotalDetallesBs(montoNum, moneda, editingId ?? undefined);
     const excedente = Number(totalBsSave) - Number(limiteBs);
+    const gastoMaximoBs = Number(convertirAMoneyValues(gastoMaximoEsperado, gastoMaximoEsperadoMoneda, hoy).bs);
+    const totalLimitesConNuevo = otrasCategoriasLimitesBs + Number(totalBsSave);
+    const excedenteMaximo = totalLimitesConNuevo - gastoMaximoBs;
 
-    if (editingId) {
-      onUpdate(editingId, data);
-    } else {
-      onAdd(data);
-    }
-
-    if (excedente > 0 && onUpdateCategoria) {
-      onUpdateCategoria(categoriaId, {
-        limite: totalBsSave,
-        limiteMoneda: "Bs",
+    if (excedenteMaximo > 0 && onUpdatePresupuesto) {
+      setPendingSave({
+        totalBs: totalBsSave,
+        nuevoLimiteCategoriaBs: totalBsSave,
+        excedenteMaximoBs: bs(excedenteMaximo),
       });
+      return;
     }
 
+    applyUpdates(data, totalBsSave, excedente, excedenteMaximo);
     resetForm();
+  };
+
+  const handleConfirmExcedeMaximo = () => {
+    if (!pendingSave) return;
+    const montoNum = parseFloat(montoInput) || 0;
+    const data = {
+      categoriaId: categoriaId as CategoriaId,
+      nombre: nombre.trim(),
+      montoEstimado: moneda === "USD" ? usd(montoNum) : bs(montoNum),
+      moneda,
+      orden: parseInt(orden, 10) || 1,
+      color,
+    };
+    const excedenteMaximo = Number(pendingSave.excedenteMaximoBs);
+    applyUpdates(data, pendingSave.totalBs, 0, excedenteMaximo);
+    setPendingSave(null);
+    resetForm();
+  };
+
+  const handleCancelExcedeMaximo = () => {
+    setPendingSave(null);
   };
 
   const montoNum = montoInput ? (parseFloat(montoInput) || 0) : 0;
   const totalBs = montoNum > 0 ? calcTotalDetallesBs(montoNum, moneda, editingId ?? undefined) : (0 as Money);
   const excedenteBs = Number(totalBs) - Number(limiteBs);
   const overLimit = montoNum > 0 && excedenteBs > 0;
+
+  if (!open) return null;
 
   return (
     <>
@@ -276,6 +340,16 @@ export default function CategoriaDetalleEditor({
           setConfirmDeleteId(null);
         }}
         onCancel={() => setConfirmDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={pendingSave !== null}
+        title="Excede el gasto máximo esperado"
+        message={`El nuevo límite de la categoría (${fromCartera(pendingSave?.nuevoLimiteCategoriaBs ?? bs(0), "Bs").primary}) hace que el total de categorías supere el gasto máximo esperado por ${fromCartera(pendingSave?.excedenteMaximoBs ?? bs(0), "Bs").primary}. Al guardar, el gasto máximo esperado se actualizará automáticamente.`}
+        confirmLabel="Guardar y actualizar"
+        confirmTone="primary"
+        onConfirm={handleConfirmExcedeMaximo}
+        onCancel={handleCancelExcedeMaximo}
       />
     </>
   );
