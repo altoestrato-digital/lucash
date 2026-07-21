@@ -117,7 +117,8 @@ export default function DashboardPage() {
         <DashboardKpis
           disponible={dashboardData.disponible}
           presupuestoPct={dashboardData.presupuestoCubiertoPct}
-          gastadoMes={dashboardData.gastadoMesBs}
+          gastadoMesBs={dashboardData.gastadoMesBs}
+          gastadoMesUsd={dashboardData.gastadoMesUsd}
           totalBs={totalEnBs as Money}
           totalUsd={totalEnUsd as Money}
           onDisponibleClick={() => router.push("/carteras")}

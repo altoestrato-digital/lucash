@@ -8,7 +8,7 @@ import type { DashboardData } from "@/types/dashboard";
 import { getResumen } from "@/hooks/useResumenCarteras";
 import { calcularCobertura } from "@/lib/cobertura";
 import { toIso } from "@/lib/dates";
-import { sum, bs } from "@/lib/money";
+import { sum, bs, usd } from "@/lib/money";
 
 export function useDashboardData(
   carteras: Cartera[],
@@ -34,25 +34,26 @@ export const getDashboardData = (
     return txDate >= inicioMes && txDate <= hoy;
   });
 
-  const gastosMes = txsDelMes
-    .filter((t) => t.tipo === "egreso")
-    .reduce((a, t) => sum(a, t.montoBs), bs(0));
+  const egresosDelMes = txsDelMes.filter((t) => t.tipo === "egreso");
+
+  const gastosMesBs = egresosDelMes.reduce((a, t) => sum(a, t.montoBs), bs(0));
+  const gastosMesUsd = egresosDelMes.reduce((a, t) => sum(a, t.montoUsd), usd(0));
 
   const cobertura = presupuesto
     ? calcularCobertura(presupuesto, txsDelMes, resumenCarteras.disponibleBs)
     : null;
 
-  const totalGastos = Number(gastosMes) || 1;
+  const totalGastosBs = Number(gastosMesBs) || 1;
 
-  const gastosCollection = txsDelMes
-    .filter((t) => t.tipo === "egreso")
-    .reduce<Record<string, { total: number; nombre: string; color: string }>>((acc, t) => {
+  const gastosCollection = egresosDelMes
+    .reduce<Record<string, { totalBs: number; totalUsd: number; nombre: string; color: string }>>((acc, t) => {
       const key = t.categoriaId ?? "otros";
       if (!acc[key]) {
         const cat = presupuesto?.categorias.find((s) => s.id === t.categoriaId);
-        acc[key] = { total: 0, nombre: cat?.nombre ?? "Otros", color: cat?.color ?? "#9CA3AF" };
+        acc[key] = { totalBs: 0, totalUsd: 0, nombre: cat?.nombre ?? "Otros", color: cat?.color ?? "#9CA3AF" };
       }
-      acc[key].total += Number(t.montoBs);
+      acc[key].totalBs += Number(t.montoBs);
+      acc[key].totalUsd += Number(t.montoUsd);
       return acc;
     }, {});
 
@@ -60,8 +61,9 @@ export const getDashboardData = (
     categoriaId: id,
     nombre: info.nombre,
     color: info.color,
-    gastadoBs: bs(info.total),
-    porcentaje: (info.total / totalGastos) * 100,
+    gastadoBs: bs(info.totalBs),
+    gastadoUsd: usd(info.totalUsd),
+    porcentaje: (info.totalBs / totalGastosBs) * 100,
   }));
 
   const ultimasTransacciones = [...transacciones]
@@ -73,7 +75,8 @@ export const getDashboardData = (
     presupuestoCubiertoPct: cobertura && Number(cobertura.ingresoEsperadoBs) > 0
       ? Math.min(100, (Number(cobertura.ingresoRealBs) / Number(cobertura.ingresoEsperadoBs)) * 100)
       : 0,
-    gastadoMesBs: gastosMes,
+    gastadoMesBs: gastosMesBs,
+    gastadoMesUsd: gastosMesUsd,
     gastosPorCat,
     ultimasTransacciones,
   };

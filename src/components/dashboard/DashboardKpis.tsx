@@ -7,7 +7,8 @@ import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 interface DashboardKpisProps {
   disponible: { bs: Money; usd: Money };
   presupuestoPct: number;
-  gastadoMes: Money;
+  gastadoMesBs: Money;
+  gastadoMesUsd: Money;
   totalBs: Money;
   totalUsd: Money;
   onDisponibleClick: () => void;
@@ -18,14 +19,15 @@ interface DashboardKpisProps {
 export default function DashboardKpis({
   disponible,
   presupuestoPct,
-  gastadoMes,
+  gastadoMesBs,
+  gastadoMesUsd,
   onDisponibleClick,
   onPresupuestoClick,
   onGastadoClick,
 }: DashboardKpisProps) {
-  const { fromBs, formatPair } = useMonedaActiva();
+  const { formatPair } = useMonedaActiva();
   const disponiblePair = formatPair(disponible.bs, disponible.usd);
-  const gastadoPair = fromBs(gastadoMes);
+  const gastadoPair = formatPair(gastadoMesBs, gastadoMesUsd);
   const kpis = [
     {
       label: "Disponible",
