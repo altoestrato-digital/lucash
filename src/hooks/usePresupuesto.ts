@@ -39,7 +39,10 @@ export function usePresupuesto(filtrarPorEspacio = true) {
   const updatePresupuesto = useCallback((data: Partial<Presupuesto>) => {
     if (!isDBReady()) return;
     const current = presupuestoRepo.getActual();
-    if (current) {
+    const currentBelongsToWorkspace = current && espacioId
+      ? current.espacioTrabajoId === espacioId
+      : true;
+    if (current && currentBelongsToWorkspace) {
       const merged: Omit<Presupuesto, "id" | "createdAt"> = {
         ...current,
         ...data,
