@@ -5,6 +5,7 @@ import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudg
 import type { ISODate } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { toIso } from "@/lib/dates";
+import { usePreferencias } from "@/hooks/usePreferencias";
 import PeriodicidadSelect from "./PeriodicidadSelect";
 import CategoriaRow from "./CategoriaRow";
 import MoneyInput from "./MoneyInput";
@@ -33,10 +34,11 @@ export default function PresupuestoEditor({
   onDetallesCat: (cat: Categoria) => void;
   detallesMap?: Record<string, CategoriaDetalle[]>;
 }) {
+  const { preferencias } = usePreferencias();
   const [ingreso, setIngreso] = useState(String(Number(presupuesto.ingresoEsperado)));
-  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(presupuesto.ingresoEsperadoMoneda);
+  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(presupuesto.ingresoEsperadoMoneda || preferencias.moneda);
   const [gastoMaximo, setGastoMaximo] = useState(String(Number(presupuesto.gastoMaximoEsperado)));
-  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(presupuesto.gastoMaximoEsperadoMoneda);
+  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(presupuesto.gastoMaximoEsperadoMoneda || preferencias.moneda);
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>(presupuesto.periodicidad);
   const [corteDia, setCorteDia] = useState<1 | 16>(presupuesto.quincenaCorteDia ?? 1);
   const [fechaInicio, setFechaInicio] = useState<ISODate>(presupuesto.fechaInicio);
