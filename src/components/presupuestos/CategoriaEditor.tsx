@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Categoria, MonedaBudget } from "@/types/presupuesto";
 import type { HexColor } from "@/types/hex-color";
-import { bs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import ColorPicker from "./ColorPicker";
@@ -99,6 +99,15 @@ function CategoriaEditorInner({
   const esteLimiteBs = limite ? toBs(Number(limite), limiteMoneda) : 0;
   const totalConEsteBs = otrosCatsTotalBs + esteLimiteBs;
   const excedeMaximo = gastoMaximoBs > 0 && totalConEsteBs > gastoMaximoBs;
+  const excedenteBs = totalConEsteBs - gastoMaximoBs;
+
+  const hoy = toIso(new Date());
+  const totalConEsteMoneda = gastoMaximoEsperadoMoneda === "USD"
+    ? Number(convertirAUSD(totalConEsteBs, "Bs", hoy))
+    : totalConEsteBs;
+  const excedenteMoneda = gastoMaximoEsperadoMoneda === "USD"
+    ? Number(convertirAUSD(excedenteBs, "Bs", hoy))
+    : excedenteBs;
 
   const getEquivalent = (value: string, moneda: MonedaBudget): string => {
     const num = Number(value);
@@ -117,8 +126,8 @@ function CategoriaEditorInner({
     if (!nombre.trim() || !limite) return;
     if (excedeMaximo && onUpdatePresupuesto) {
       onUpdatePresupuesto({
-        gastoMaximoEsperado: bs(totalConEsteBs),
-        gastoMaximoEsperadoMoneda: "Bs",
+        gastoMaximoEsperado: gastoMaximoEsperadoMoneda === "USD" ? usd(totalConEsteMoneda) : bs(totalConEsteBs),
+        gastoMaximoEsperadoMoneda,
       });
     }
     onSave({
@@ -203,7 +212,7 @@ function CategoriaEditorInner({
             {excedeMaximo ? (
               <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 dark:bg-amber-950/40 dark:border-amber-800">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                  Total de categorías: {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(totalConEsteBs / (gastoMaximoBs / gastoMaximoEsperado))}` : `Bs ${formatBs(totalConEsteBs)}`}. Excede el gasto máximo (Bs {formatBs(gastoMaximoBs)}) por Bs {formatBs(totalConEsteBs - gastoMaximoBs)}.
+                  Total de categorías: {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(totalConEsteMoneda)}` : `Bs ${formatBs(totalConEsteBs)}`}. Excede el gasto máximo ({gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(gastoMaximoEsperado)}` : `Bs ${formatBs(gastoMaximoBs)}`}) por {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(excedenteMoneda)}` : `Bs ${formatBs(excedenteBs)}`}.
                 </p>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                   Al guardar, el gasto máximo se actualizará automáticamente.
