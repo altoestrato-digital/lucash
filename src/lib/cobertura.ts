@@ -1,7 +1,7 @@
 import type { Presupuesto, ResumenCobertura, CoberturaCategoria, AlertaCobertura } from "@/types/presupuesto";
 import type { Transaccion } from "@/types/transaccion";
 import type { Money } from "@/lib/money";
-import { sum, sub, bs } from "@/lib/money";
+import { sum, sub, bs, usd } from "@/lib/money";
 import { toBs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 
@@ -16,11 +16,20 @@ export const calcularCobertura = (
     .filter((t) => t.tipo === "ingreso")
     .reduce((acc, t) => sum(acc, t.montoBs), bs(0));
 
+  const ingresoRealUsd = txs
+    .filter((t) => t.tipo === "ingreso")
+    .reduce((acc, t) => sum(acc, t.montoUsd), usd(0));
+
   const gastoTotalBs = txs
     .filter((t) => t.tipo === "egreso")
     .reduce((acc, t) => sum(acc, t.montoBs), bs(0));
 
+  const gastoTotalUsd = txs
+    .filter((t) => t.tipo === "egreso")
+    .reduce((acc, t) => sum(acc, t.montoUsd), usd(0));
+
   const balanceBs = sub(ingresoRealBs, gastoTotalBs);
+  const balanceUsd = sub(ingresoRealUsd, gastoTotalUsd);
 
   const disponibleBs = disponibleCarteras ?? balanceBs;
 
@@ -192,10 +201,13 @@ export const calcularCobertura = (
     ingresoEsperadoBs: bs(ingresoEsperadoBs),
     ingresoEsperadoMoneda: p.ingresoEsperadoMoneda,
     ingresoRealBs,
+    ingresoRealUsd,
     gastoMaximoEsperadoBs: bs(gastoMaximoBs),
     gastoMaximoEsperadoMoneda: p.gastoMaximoEsperadoMoneda,
     gastoTotalBs,
+    gastoTotalUsd,
     balanceBs,
+    balanceUsd,
     catCubiertas,
     totalCats: activos.length,
     porCat,

@@ -100,10 +100,13 @@ export interface ResumenCobertura {
   ingresoEsperadoBs: Money;
   ingresoEsperadoMoneda: MonedaBudget;
   ingresoRealBs: Money;
+  ingresoRealUsd: Money;
   gastoMaximoEsperadoBs: Money;
   gastoMaximoEsperadoMoneda: MonedaBudget;
   gastoTotalBs: Money;
+  gastoTotalUsd: Money;
   balanceBs: Money;
+  balanceUsd: Money;
   catCubiertas: number;
   totalCats: number;
   porCat: CoberturaCategoria[];

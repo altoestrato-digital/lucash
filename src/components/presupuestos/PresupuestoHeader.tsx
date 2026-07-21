@@ -11,15 +11,19 @@ import { toIso } from "@/lib/dates";
 interface PresupuestoHeaderProps {
   presupuesto: Presupuesto;
   ingresoRealBs: Money;
+  ingresoRealUsd: Money;
   gastoRealBs: Money;
+  gastoRealUsd: Money;
 }
 
 export default function PresupuestoHeader({
   presupuesto,
   ingresoRealBs,
+  ingresoRealUsd,
   gastoRealBs,
+  gastoRealUsd,
 }: PresupuestoHeaderProps) {
-  const { moneda, fromBs } = useMonedaActiva();
+  const { moneda, formatPair } = useMonedaActiva();
   const hoy = toIso(new Date());
 
   const toDisplayFromAmount = (amount: number, amountMoneda: "Bs" | "USD"): { primary: string; secondary: string } => {
@@ -41,10 +45,10 @@ export default function PresupuestoHeader({
   };
 
   const ingresoDisplay = toDisplayFromAmount(Number(presupuesto.ingresoEsperado), presupuesto.ingresoEsperadoMoneda);
-  const ingresoRealDisplay = fromBs(ingresoRealBs);
+  const ingresoRealDisplay = formatPair(ingresoRealBs, ingresoRealUsd);
 
   const gastoMaxDisplay = toDisplayFromAmount(Number(presupuesto.gastoMaximoEsperado), presupuesto.gastoMaximoEsperadoMoneda);
-  const gastoRealDisplay = fromBs(gastoRealBs);
+  const gastoRealDisplay = formatPair(gastoRealBs, gastoRealUsd);
 
   const ingresoEsperadoBs = presupuesto.ingresoEsperadoMoneda === "Bs"
     ? Number(presupuesto.ingresoEsperado)

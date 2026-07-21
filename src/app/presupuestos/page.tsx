@@ -179,7 +179,9 @@ export default function PresupuestosPage() {
         <PresupuestoHeader
           presupuesto={presupuesto}
           ingresoRealBs={cobertura.ingresoRealBs}
+          ingresoRealUsd={cobertura.ingresoRealUsd}
           gastoRealBs={cobertura.gastoTotalBs}
+          gastoRealUsd={cobertura.gastoTotalUsd}
         />
       )}
 
