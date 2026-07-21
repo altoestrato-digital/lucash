@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
 import { useCobertura } from "@/hooks/useCobertura";
 import { usePeriodoCerrado } from "@/hooks/usePeriodoCerrado";
@@ -12,8 +12,11 @@ import { toIso } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { convertirAMoneyValues } from "@/lib/conversion";
 import { sum } from "@/lib/money";
+import { espacioTrabajoRepo, subscribe } from "@/lib/db";
 import { useUIStore } from "@/stores/ui";
-import type { Categoria, CategoriaDetalle } from "@/types/presupuesto";
+import type { Categoria, CategoriaDetalle, MonedaBudget } from "@/types/presupuesto";
+import type { EspacioTrabajo } from "@/types/espacio-trabajo";
+import type { Moneda } from "@/types/cartera";
 import PresupuestoHeader from "@/components/presupuestos/PresupuestoHeader";
 import PresupuestosTabs from "@/components/presupuestos/PresupuestosTabs";
 import PresupuestoResumen from "@/components/presupuestos/PresupuestoResumen";
@@ -38,16 +41,30 @@ export default function PresupuestosPage() {
 
   const pushToast = useUIStore((s) => s.pushToast);
 
+  const transacciones = useTransacciones();
+  const { carteras } = useCarteras();
+  const resumenCarteras = useResumenCarteras(carteras);
+  const { preferencias, setCoberturaModo } = usePreferencias();
+
   const [tab, setTab] = useState("Resumen");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Categoria | undefined>(undefined);
   const [detalleModalOpen, setDetalleModalOpen] = useState(false);
   const [detalleCategoria, setDetalleCategoria] = useState<Categoria | undefined>(undefined);
+  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => espacioTrabajoRepo.list());
 
-  const transacciones = useTransacciones();
-  const { carteras } = useCarteras();
-  const resumenCarteras = useResumenCarteras(carteras);
-  const { preferencias, setCoberturaModo } = usePreferencias();
+  useEffect(() => {
+    return subscribe(() => {
+      setEspacios(espacioTrabajoRepo.list());
+    });
+  }, []);
+
+  const espacioActivo = useMemo(
+    () => espacios.find((e) => e.id === preferencias.espacioTrabajoId) ?? espacios[0],
+    [espacios, preferencias.espacioTrabajoId]
+  );
+  const monedaDefaultEspacio: Moneda = espacioActivo?.monedaDefault ?? "Bs";
+  const monedaDefaultBudget: MonedaBudget = (monedaDefaultEspacio === "USD" || monedaDefaultEspacio === "USDT") ? "USD" : "Bs";
 
   const hoy = toIso(new Date());
   const carterasCubrir = carteras.filter((c) => c.activo && c.objetivo === "cubrir-presupuesto");
@@ -197,6 +214,7 @@ export default function PresupuestosPage() {
             onDeleteCat={handleDeleteCat}
             onDetallesCat={handleOpenDetalles}
             detallesMap={detallesMap}
+            monedaDefault={monedaDefaultBudget}
           />
         )}
 

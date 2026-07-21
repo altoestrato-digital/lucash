@@ -5,7 +5,6 @@ import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudg
 import type { ISODate } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { toIso } from "@/lib/dates";
-import { usePreferencias } from "@/hooks/usePreferencias";
 import PeriodicidadSelect from "./PeriodicidadSelect";
 import CategoriaRow from "./CategoriaRow";
 import MoneyInput from "./MoneyInput";
@@ -25,6 +24,7 @@ export default function PresupuestoEditor({
   onDeleteCat,
   onDetallesCat,
   detallesMap,
+  monedaDefault,
 }: {
   presupuesto: Presupuesto;
   onSave: (data: Partial<Presupuesto>) => void;
@@ -33,12 +33,16 @@ export default function PresupuestoEditor({
   onDeleteCat: (id: string) => void;
   onDetallesCat: (cat: Categoria) => void;
   detallesMap?: Record<string, CategoriaDetalle[]>;
+  monedaDefault: MonedaBudget;
 }) {
-  const { preferencias } = usePreferencias();
   const [ingreso, setIngreso] = useState(String(Number(presupuesto.ingresoEsperado)));
-  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(presupuesto.ingresoEsperadoMoneda || preferencias.moneda);
+  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(
+    presupuesto.ingresoEsperadoMoneda || monedaDefault
+  );
   const [gastoMaximo, setGastoMaximo] = useState(String(Number(presupuesto.gastoMaximoEsperado)));
-  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(presupuesto.gastoMaximoEsperadoMoneda || preferencias.moneda);
+  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(
+    presupuesto.gastoMaximoEsperadoMoneda || monedaDefault
+  );
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>(presupuesto.periodicidad);
   const [corteDia, setCorteDia] = useState<1 | 16>(presupuesto.quincenaCorteDia ?? 1);
   const [fechaInicio, setFechaInicio] = useState<ISODate>(presupuesto.fechaInicio);
@@ -93,7 +97,7 @@ export default function PresupuestoEditor({
           onChange={(v) => { setIngreso(v); setDirty(true); }}
           moneda={ingresoMoneda}
           onMonedaChange={(m) => { setIngresoMoneda(m); setDirty(true); }}
-          prioritizeMoneda={preferencias.moneda}
+          prioritizeMoneda={monedaDefault}
         />
 
         <MoneyInput
@@ -102,7 +106,7 @@ export default function PresupuestoEditor({
           onChange={(v) => { setGastoMaximo(v); setDirty(true); }}
           moneda={gastoMaximoMoneda}
           onMonedaChange={(m) => { setGastoMaximoMoneda(m); setDirty(true); }}
-          prioritizeMoneda={preferencias.moneda}
+          prioritizeMoneda={monedaDefault}
         />
 
         <div>
