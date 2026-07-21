@@ -93,6 +93,7 @@ export default function PresupuestoEditor({
           onChange={(v) => { setIngreso(v); setDirty(true); }}
           moneda={ingresoMoneda}
           onMonedaChange={(m) => { setIngresoMoneda(m); setDirty(true); }}
+          prioritizeMoneda={preferencias.moneda}
         />
 
         <MoneyInput
@@ -101,6 +102,7 @@ export default function PresupuestoEditor({
           onChange={(v) => { setGastoMaximo(v); setDirty(true); }}
           moneda={gastoMaximoMoneda}
           onMonedaChange={(m) => { setGastoMaximoMoneda(m); setDirty(true); }}
+          prioritizeMoneda={preferencias.moneda}
         />
 
         <div>

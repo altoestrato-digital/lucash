@@ -20,6 +20,7 @@ export default function MoneyInput({
   selectClassName = "",
   showEquivalent = true,
   autoFocus,
+  prioritizeMoneda,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -33,6 +34,7 @@ export default function MoneyInput({
   selectClassName?: string;
   showEquivalent?: boolean;
   autoFocus?: boolean;
+  prioritizeMoneda?: MonedaBudget;
 }) {
   const hoy = useMemo(() => toIso(new Date()), []);
   const num = Number(value);
@@ -43,6 +45,8 @@ export default function MoneyInput({
 
   const padding = size === "sm" ? "px-3 py-1.5" : "px-3 py-2.5";
   const baseInput = `w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 ${padding} text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400`;
+
+  const monedas: MonedaBudget[] = prioritizeMoneda === "USD" ? ["USD", "Bs"] : ["Bs", "USD"];
 
   return (
     <div className={className}>
@@ -68,8 +72,9 @@ export default function MoneyInput({
           onChange={(e) => onMonedaChange(e.target.value as MonedaBudget)}
           className={`rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 ${padding} text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 ${selectClassName}`}
         >
-          <option value="Bs">Bs</option>
-          <option value="USD">USD</option>
+          {monedas.map((m) => (
+            <option key={m} value={m}>{m === "USD" ? "USD" : "Bs"}</option>
+          ))}
         </select>
       </div>
       {showEquivalent && hasValue && (
