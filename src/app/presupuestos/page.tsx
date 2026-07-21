@@ -9,7 +9,7 @@ import { useCarteras } from "@/hooks/useCarteras";
 import { useResumenCarteras } from "@/hooks/useResumenCarteras";
 import { usePreferencias } from "@/hooks/usePreferencias";
 import { toIso } from "@/lib/dates";
-import { bs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { convertirAMoneyValues } from "@/lib/conversion";
 import { sum } from "@/lib/money";
 import { useUIStore } from "@/stores/ui";
@@ -144,9 +144,9 @@ export default function PresupuestosPage() {
             updatePresupuesto({
               nombre: "Presupuesto general",
               periodicidad: "mensual",
-              ingresoEsperado: bs(0),
+              ingresoEsperado: preferencias.moneda === "USD" ? usd(0) : bs(0),
               ingresoEsperadoMoneda: preferencias.moneda,
-              gastoMaximoEsperado: bs(0),
+              gastoMaximoEsperado: preferencias.moneda === "USD" ? usd(0) : bs(0),
               gastoMaximoEsperadoMoneda: preferencias.moneda,
               fechaInicio: inicio,
               fechaFin: fin,
