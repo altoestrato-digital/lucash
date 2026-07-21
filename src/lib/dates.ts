@@ -63,3 +63,12 @@ export const getMonthName = (iso: ISODate): string => {
   const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   return months[d.getMonth()];
 };
+
+/**
+ * Parsea un ISODate a Date. Por defecto usa T12:00:00 (mediodía) para evitar
+ * problemas de timezone con fechas que no tienen hora. Usar `end: true` para
+ * comparar con fin de día (T23:59:59).
+ */
+export const parseISODate = (iso: ISODate, end: boolean = false): Date => {
+  return new Date(iso + (end ? "T23:59:59" : "T12:00:00"));
+};

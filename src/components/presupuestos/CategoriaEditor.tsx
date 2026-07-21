@@ -4,18 +4,24 @@ import { useState } from "react";
 import type { Categoria, MonedaBudget } from "@/types/presupuesto";
 import type { HexColor } from "@/types/hex-color";
 import { bs, usd } from "@/lib/money";
-import { convertirAUSD, convertirABs } from "@/lib/conversion";
+import { toBs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
+import { X } from "lucide-react";
 import ColorPicker from "./ColorPicker";
 import PrioridadControl from "./PrioridadControl";
+import MoneyInput from "./MoneyInput";
+import Switch from "@/components/ui/Switch";
 
 type CategoriaDraft = Omit<Categoria, "id" | "activo" | "presupuestoId">;
 
-const toBs = (monto: number, moneda: MonedaBudget): number => {
-  if (moneda === "Bs") return monto;
-  const hoy = toIso(new Date());
-  const usdValue = convertirAUSD(monto, "USD", hoy);
-  return Number(convertirABs(usdValue, hoy));
+type CategoriaEditorFormProps = {
+  cat?: Categoria;
+  presupuestoCats: Categoria[];
+  gastoMaximoEsperado: number;
+  gastoMaximoEsperadoMoneda: MonedaBudget;
+  onSave: (data: CategoriaDraft) => void;
+  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
+  onClose: () => void;
 };
 
 export default function CategoriaEditor({
@@ -27,18 +33,9 @@ export default function CategoriaEditor({
   onSave,
   onUpdatePresupuesto,
   onClose,
-}: {
-  open: boolean;
-  cat?: Categoria;
-  presupuestoCats: Categoria[];
-  gastoMaximoEsperado: number;
-  gastoMaximoEsperadoMoneda: MonedaBudget;
-  onSave: (data: CategoriaDraft) => void;
-  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
-  onClose: () => void;
-}) {
+}: CategoriaEditorFormProps & { open: boolean }) {
   return open ? (
-    <CategoriaEditorInner
+    <CategoriaEditorForm
       key={cat?.id ?? "new"}
       cat={cat}
       presupuestoCats={presupuestoCats}
@@ -51,7 +48,7 @@ export default function CategoriaEditor({
   ) : null;
 }
 
-function CategoriaEditorInner({
+function CategoriaEditorForm({
   cat,
   presupuestoCats,
   gastoMaximoEsperado,
@@ -59,15 +56,7 @@ function CategoriaEditorInner({
   onSave,
   onUpdatePresupuesto,
   onClose,
-}: {
-  cat?: Categoria;
-  presupuestoCats: Categoria[];
-  gastoMaximoEsperado: number;
-  gastoMaximoEsperadoMoneda: MonedaBudget;
-  onSave: (data: CategoriaDraft) => void;
-  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
-  onClose: () => void;
-}) {
+}: CategoriaEditorFormProps) {
   const [nombre, setNombre] = useState(cat?.nombre ?? "");
   const [color, setColor] = useState(cat?.color ?? "#3B82F6");
   const [limite, setLimite] = useState(cat ? String(Number(cat.limite)) : "");
@@ -92,34 +81,26 @@ function CategoriaEditorInner({
     }
   };
 
-  const gastoMaximoBs = toBs(gastoMaximoEsperado, gastoMaximoEsperadoMoneda);
+  const hoy = toIso(new Date());
+  const gastoMaximoBs = toBs(gastoMaximoEsperado, gastoMaximoEsperadoMoneda, hoy);
   const otrosCatsTotalBs = presupuestoCats
     .filter((s) => s.activo && s.id !== cat?.id)
-    .reduce((acc, s) => acc + toBs(Number(s.limite), s.limiteMoneda), 0);
-  const esteLimiteBs = limite ? toBs(Number(limite), limiteMoneda) : 0;
+    .reduce((acc, s) => acc + toBs(Number(s.limite), s.limiteMoneda, hoy), 0);
+  const esteLimiteBs = limite ? toBs(Number(limite), limiteMoneda, hoy) : 0;
   const totalConEsteBs = otrosCatsTotalBs + esteLimiteBs;
   const excedeMaximo = gastoMaximoBs > 0 && totalConEsteBs > gastoMaximoBs;
   const excedenteBs = totalConEsteBs - gastoMaximoBs;
 
-  const hoy = toIso(new Date());
   const totalConEsteMoneda = gastoMaximoEsperadoMoneda === "USD"
-    ? Number(convertirAUSD(totalConEsteBs, "Bs", hoy))
+    ? Number(toBs(totalConEsteBs, "Bs", hoy) / toBs(1, "USD", hoy))
     : totalConEsteBs;
   const excedenteMoneda = gastoMaximoEsperadoMoneda === "USD"
-    ? Number(convertirAUSD(excedenteBs, "Bs", hoy))
+    ? Number(toBs(excedenteBs, "Bs", hoy) / toBs(1, "USD", hoy))
     : excedenteBs;
 
-  const getEquivalent = (value: string, moneda: MonedaBudget): string => {
-    const num = Number(value);
-    if (isNaN(num) || num === 0) return "";
-    if (moneda === "Bs") {
-      const usdEq = Number(convertirAUSD(num, "Bs", toIso(new Date())));
-      return usdEq > 0 ? `≈ USD ${usdEq.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "";
-    } else {
-      const bsEq = toBs(num, "USD");
-      return bsEq > 0 ? `≈ Bs ${bsEq.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "";
-    }
-  };
+  const formatNum = (v: number, locale: "es-VE" | "en-US") =>
+    v.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const monedaLabel = (m: "Bs" | "USD") => m === "USD" ? "USD" : "Bs";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,9 +122,6 @@ function CategoriaEditorInner({
     });
   };
 
-  const formatBs = (v: number) => v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const formatUSD = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
       <div
@@ -154,10 +132,8 @@ function CategoriaEditorInner({
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {cat ? "Editar categoría" : "Nueva categoría"}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
-            <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700" aria-label="Cerrar">
+            <X className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
 
@@ -179,71 +155,37 @@ function CategoriaEditorInner({
             <ColorPicker value={color} onChange={setColor} />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Limite</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="number"
-                  value={limite}
-                  onChange={(e) => setLimite(e.target.value)}
-                  required
-                  min={0}
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400 pointer-events-none">
-                  {limiteMoneda === "USD" ? "USD" : "Bs"}
-                </span>
-              </div>
-              <select
-                value={limiteMoneda}
-                onChange={(e) => setLimiteMoneda(e.target.value as MonedaBudget)}
-                className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              >
-                <option value="Bs">Bs</option>
-                <option value="USD">USD</option>
-              </select>
+          <MoneyInput
+            label="Limite"
+            value={limite}
+            onChange={setLimite}
+            moneda={limiteMoneda}
+            onMonedaChange={setLimiteMoneda}
+            showEquivalent={false}
+          />
+
+          {excedeMaximo && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 dark:bg-amber-950/40 dark:border-amber-800">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                Total de categorías: {monedaLabel(gastoMaximoEsperadoMoneda)} {formatNum(gastoMaximoEsperadoMoneda === "USD" ? totalConEsteMoneda : totalConEsteBs, gastoMaximoEsperadoMoneda === "USD" ? "en-US" : "es-VE")}. Excede el gasto máximo ({monedaLabel(gastoMaximoEsperadoMoneda)} {formatNum(gastoMaximoEsperadoMoneda === "USD" ? gastoMaximoEsperado : gastoMaximoBs, gastoMaximoEsperadoMoneda === "USD" ? "en-US" : "es-VE")}) por {monedaLabel(gastoMaximoEsperadoMoneda)} {formatNum(gastoMaximoEsperadoMoneda === "USD" ? excedenteMoneda : excedenteBs, gastoMaximoEsperadoMoneda === "USD" ? "en-US" : "es-VE")}.
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                Al guardar, el gasto máximo se actualizará automáticamente.
+              </p>
             </div>
-            {limite && Number(limite) > 0 && (
-              <p className="mt-1 text-xs text-zinc-500">{getEquivalent(limite, limiteMoneda)}</p>
-            )}
-            {excedeMaximo && (
-              <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 dark:bg-amber-950/40 dark:border-amber-800">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                  Total de categorías: {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(totalConEsteMoneda)}` : `Bs ${formatBs(totalConEsteBs)}`}. Excede el gasto máximo ({gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(gastoMaximoEsperado)}` : `Bs ${formatBs(gastoMaximoBs)}`}) por {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(excedenteMoneda)}` : `Bs ${formatBs(excedenteBs)}`}.
-                </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                  Al guardar, el gasto máximo se actualizará automáticamente.
-                </p>
-              </div>
-            )}
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Prioridad</label>
             <PrioridadControl value={prioridad} onChange={handlePrioridadChange} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Recurrente</label>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={recurrente}
-              onClick={() => setRecurrente((r) => !r)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${
-                recurrente ? "bg-zinc-900 dark:bg-zinc-100" : "bg-zinc-300 dark:bg-zinc-600"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white dark:bg-zinc-900 transition-transform ${
-                  recurrente ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
+          <Switch
+            checked={recurrente}
+            onChange={setRecurrente}
+            label="Recurrente"
+            className="py-1"
+          />
 
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Orden</label>

@@ -86,3 +86,16 @@ export const convertirAMoneyValues = (monto: number, moneda: Moneda, fecha: ISOD
   const bsEq = convertirABs(usdEq, fecha);
   return { bs: bsEq, usd: usdEq };
 };
+
+/**
+ * Convierte un monto en su moneda nativa (Bs o USD) a un número en Bs.
+ * Usa la tasa activa del día. Si la moneda ya es Bs, retorna el mismo monto.
+ *
+ * Acepta `Moneda` (más amplio que `MonedaBudget`) para reuso: cuando se
+ * necesite convertir montos de carteras con monedas no-Bs/USD (USDT/BTC/ETH),
+ * pasar explícitamente `convertirAMoneyValues` y tomar `.bs`.
+ */
+export const toBs = (monto: number, moneda: "Bs" | "USD", fecha: ISODate): number => {
+  if (moneda === "Bs") return monto;
+  return Number(convertirAMoneyValues(monto, moneda, fecha).bs);
+};

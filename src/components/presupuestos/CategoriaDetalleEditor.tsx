@@ -7,8 +7,10 @@ import { bs, usd, type Money } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 import { convertirAMoneyValues } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
+import { Pencil, Trash2, X } from "lucide-react";
 import type { CategoriaId } from "@/types/transaccion";
 import ColorPicker from "./ColorPicker";
+import MoneyInput from "./MoneyInput";
 
 interface CategoriaDetalleEditorProps {
   open: boolean;
@@ -42,19 +44,20 @@ export default function CategoriaDetalleEditor({
   const [nombre, setNombre] = useState("");
   const [montoInput, setMontoInput] = useState("");
   const [moneda, setMoneda] = useState<MonedaBudget>("Bs");
-  const [color, setColor] = useState("#3B82F6");
+  const [color, setColor] = useState<HexColor>("#3B82F6" as HexColor);
   const [orden, setOrden] = useState("1");
 
   const { fromCartera } = useMonedaActiva();
   const hoy = toIso(new Date());
 
-  const resetForm = () => {
-    setEditingId(null);
-    setNombre("");
-    setMontoInput("");
-    setMoneda("Bs");
-    setColor("#3B82F6");
-    setOrden(String(detalles.length + 1));
+  const initForm = (d?: CategoriaDetalle) => {
+    setEditingId(d?.id ?? null);
+    setNombre(d?.nombre ?? "");
+    setMontoInput(d ? String(Number(d.montoEstimado)) : "");
+    setMoneda(d?.moneda ?? "Bs");
+    setColor(d?.color ?? ("#3B82F6" as HexColor));
+    setOrden(d ? String(d.orden) : String(detalles.length + 1));
+    setFormOpen(true);
   };
 
   const calcTotalDetallesBs = (montoNuevo: number, monedaNueva: MonedaBudget, excludeId?: string): Money => {
@@ -71,16 +74,6 @@ export default function CategoriaDetalleEditor({
 
   if (!open) return null;
 
-  const handleEdit = (d: CategoriaDetalle) => {
-    setEditingId(d.id);
-    setNombre(d.nombre);
-    setMontoInput(String(Number(d.montoEstimado)));
-    setMoneda(d.moneda);
-    setColor(d.color);
-    setOrden(String(d.orden));
-    setFormOpen(true);
-  };
-
   const handleSave = () => {
     if (!nombre.trim() || !montoInput) return;
     const montoNum = parseFloat(montoInput) || 0;
@@ -90,7 +83,7 @@ export default function CategoriaDetalleEditor({
       montoEstimado: moneda === "USD" ? usd(montoNum) : bs(montoNum),
       moneda,
       orden: parseInt(orden, 10) || 1,
-      color: color as HexColor,
+      color,
     };
 
     const totalBsSave = calcTotalDetallesBs(montoNum, moneda, editingId ?? undefined);
@@ -109,7 +102,12 @@ export default function CategoriaDetalleEditor({
       });
     }
 
-    resetForm();
+    setEditingId(null);
+    setNombre("");
+    setMontoInput("");
+    setMoneda("Bs");
+    setColor("#3B82F6" as HexColor);
+    setOrden(String(detalles.length + 1));
     setFormOpen(false);
   };
 
@@ -138,14 +136,11 @@ export default function CategoriaDetalleEditor({
             <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Detalles</h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">{categoriaNombre}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
-            <svg className="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700" aria-label="Cerrar">
+            <X className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
 
-        {/* Lista de detalles */}
         <div className="space-y-2 mb-4">
           {detalles.length === 0 && !formOpen && (
             <p className="text-sm text-zinc-400 dark:text-zinc-500 py-4 text-center">
@@ -166,22 +161,18 @@ export default function CategoriaDetalleEditor({
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => handleEdit(d)}
+                    onClick={() => initForm(d)}
                     className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     aria-label="Editar"
                   >
-                    <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <Pencil className="w-4 h-4 text-zinc-500" />
                   </button>
                   <button
                     onClick={() => handleDelete(d.id)}
                     className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     aria-label="Eliminar"
                   >
-                    <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </div>
               </div>
@@ -189,7 +180,6 @@ export default function CategoriaDetalleEditor({
           })}
         </div>
 
-        {/* Formulario inline */}
         {formOpen && (
           <div className="border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 mb-4 space-y-3">
             <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -205,30 +195,18 @@ export default function CategoriaDetalleEditor({
                 autoFocus
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Monto estimado</label>
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-400"
-                  type="number"
-                  step="any"
-                  value={montoInput}
-                  onChange={(e) => setMontoInput(e.target.value)}
-                  placeholder="0"
-                />
-                <select
-                  className="rounded-lg border border-zinc-300 px-2 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-400"
-                  value={moneda}
-                  onChange={(e) => setMoneda(e.target.value as MonedaBudget)}
-                >
-                  <option value="Bs">Bs</option>
-                  <option value="USD">USD</option>
-                </select>
-              </div>
-            </div>
+            <MoneyInput
+              label="Monto estimado"
+              value={montoInput}
+              onChange={setMontoInput}
+              moneda={moneda}
+              onMonedaChange={setMoneda}
+              size="sm"
+              showEquivalent={false}
+            />
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Color</label>
-              <ColorPicker value={color} onChange={setColor} />
+              <ColorPicker value={color} onChange={(c) => setColor(c as HexColor)} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Orden</label>
@@ -257,7 +235,15 @@ export default function CategoriaDetalleEditor({
             <div className="flex gap-2 pt-1">
               <button
                 className="flex-1 rounded-lg border border-zinc-300 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                onClick={() => { resetForm(); setFormOpen(false); }}
+                onClick={() => {
+                  setEditingId(null);
+                  setNombre("");
+                  setMontoInput("");
+                  setMoneda("Bs");
+                  setColor("#3B82F6" as HexColor);
+                  setOrden(String(detalles.length + 1));
+                  setFormOpen(false);
+                }}
               >
                 Cancelar
               </button>
@@ -275,18 +261,10 @@ export default function CategoriaDetalleEditor({
           </div>
         )}
 
-        {/* Botón agregar */}
         {!formOpen && (
           <button
             className="w-full rounded-lg border-2 border-dashed border-zinc-300 dark:border-zinc-600 py-3 text-sm font-medium text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 dark:hover:border-zinc-500 dark:hover:text-zinc-300 transition-colors"
-            onClick={() => {
-              setEditingId(null);
-              setNombre("");
-              setMontoInput("");
-              setColor("#3B82F6");
-              setOrden(String(detalles.length + 1));
-              setFormOpen(true);
-            }}
+            onClick={() => initForm()}
           >
             + Agregar detalle
           </button>

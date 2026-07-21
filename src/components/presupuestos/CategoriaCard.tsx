@@ -5,12 +5,8 @@ import type { CoberturaCategoria, CategoriaDetalle } from "@/types/presupuesto";
 import { formatBs, formatUsd } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 import { ChevronRight } from "lucide-react";
-
-const prioridadColors: Record<number, string> = {
-  1: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-  2: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  3: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-};
+import { PRIORIDAD_BADGE_CLASSES } from "@/lib/presupuesto-styles";
+import DetalleList from "./DetalleList";
 
 const statusConfig: Record<string, { label: string; classes: string }> = {
   "cubierto":   { label: "Cubierto",   classes: "bg-primary/10 text-primary" },
@@ -20,7 +16,7 @@ const statusConfig: Record<string, { label: string; classes: string }> = {
 };
 
 export default function CategoriaCard({ cat, detalles }: { cat: CoberturaCategoria; detalles?: CategoriaDetalle[] }) {
-  const { moneda, fromBs, fromCartera } = useMonedaActiva();
+  const { moneda, fromBs } = useMonedaActiva();
   const [expanded, setExpanded] = useState(false);
   const hasDetalles = detalles && detalles.length > 0;
 
@@ -49,7 +45,7 @@ export default function CategoriaCard({ cat, detalles }: { cat: CoberturaCategor
           )}
         </div>
         {cat.prioridad && (
-          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${prioridadColors[cat.prioridad]}`}>
+          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${PRIORIDAD_BADGE_CLASSES[cat.prioridad]}`}>
             P{cat.prioridad}
           </span>
         )}
@@ -83,18 +79,7 @@ export default function CategoriaCard({ cat, detalles }: { cat: CoberturaCategor
       </div>
 
       {expanded && hasDetalles && (
-        <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-          {detalles!.map((d) => {
-            const pair = fromCartera(Number(d.montoEstimado), d.moneda);
-            return (
-              <div key={d.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                <span className="flex-1 text-xs text-zinc-700 dark:text-zinc-300 truncate">{d.nombre}</span>
-                <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">{pair.primary}</span>
-              </div>
-            );
-          })}
-        </div>
+        <DetalleList detalles={detalles} variant="card" onItemClick={(e) => e.stopPropagation()} />
       )}
     </div>
   );

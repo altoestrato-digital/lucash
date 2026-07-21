@@ -4,10 +4,11 @@ import { useState } from "react";
 import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudget } from "@/types/presupuesto";
 import type { ISODate } from "@/lib/dates";
 import { bs } from "@/lib/money";
-import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import PeriodicidadSelect from "./PeriodicidadSelect";
 import CategoriaRow from "./CategoriaRow";
+import MoneyInput from "./MoneyInput";
+import Switch from "@/components/ui/Switch";
 
 const defaultRangoFechas = (): { inicio: ISODate; fin: ISODate } => {
   const hoy = new Date();
@@ -32,8 +33,6 @@ export default function PresupuestoEditor({
   onDetallesCat: (cat: Categoria) => void;
   detallesMap?: Record<string, CategoriaDetalle[]>;
 }) {
-  const hoy = toIso(new Date());
-
   const [ingreso, setIngreso] = useState(String(Number(presupuesto.ingresoEsperado)));
   const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(presupuesto.ingresoEsperadoMoneda);
   const [gastoMaximo, setGastoMaximo] = useState(String(Number(presupuesto.gastoMaximoEsperado)));
@@ -46,18 +45,6 @@ export default function PresupuestoEditor({
   const [dirty, setDirty] = useState(false);
 
   const activos = presupuesto.categorias.filter((s) => s.activo);
-
-  const getEquivalentBs = (value: string, moneda: MonedaBudget): string => {
-    const num = Number(value);
-    if (isNaN(num) || num === 0) return "";
-    if (moneda === "Bs") {
-      const usdEq = Number(convertirAUSD(num, "Bs", hoy));
-      return usdEq > 0 ? `≈ USD ${usdEq.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "";
-    } else {
-      const bsEq = Number(convertirABs(bs(num), hoy));
-      return bsEq > 0 ? `≈ Bs ${bsEq.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "";
-    }
-  };
 
   const handlePeriodicidadChange = (p: Periodicidad) => {
     setPeriodicidad(p);
@@ -95,71 +82,24 @@ export default function PresupuestoEditor({
     fechaFin !== presupuesto.fechaFin ||
     (periodicidad === "rango" && persistente !== (presupuesto.persistente ?? false));
 
-  const inputClass = "w-full rounded-xl border border-border bg-surface-elevated px-3 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
-  const selectClass = "rounded-xl border border-border bg-surface-elevated px-2 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
-
   return (
     <div className="space-y-6 pb-24">
       <div className="rounded-2xl bg-surface border border-border p-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Ingreso esperado</label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="number"
-                value={ingreso}
-                onChange={(e) => { setIngreso(e.target.value); setDirty(true); }}
-                min={0}
-                step="0.01"
-                className={inputClass}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted pointer-events-none">
-                {ingresoMoneda === "USD" ? "USD" : "Bs"}
-              </span>
-            </div>
-            <select
-              value={ingresoMoneda}
-              onChange={(e) => { setIngresoMoneda(e.target.value as MonedaBudget); setDirty(true); }}
-              className={selectClass}
-            >
-              <option value="Bs">Bs</option>
-              <option value="USD">USD</option>
-            </select>
-          </div>
-          {ingreso && Number(ingreso) > 0 && (
-            <p className="mt-1 text-xs text-muted">{getEquivalentBs(ingreso, ingresoMoneda)}</p>
-          )}
-        </div>
+        <MoneyInput
+          label="Ingreso esperado"
+          value={ingreso}
+          onChange={(v) => { setIngreso(v); setDirty(true); }}
+          moneda={ingresoMoneda}
+          onMonedaChange={(m) => { setIngresoMoneda(m); setDirty(true); }}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Gasto maximo esperado</label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="number"
-                value={gastoMaximo}
-                onChange={(e) => { setGastoMaximo(e.target.value); setDirty(true); }}
-                min={0}
-                step="0.01"
-                className={inputClass}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted pointer-events-none">
-                {gastoMaximoMoneda === "USD" ? "USD" : "Bs"}
-              </span>
-            </div>
-            <select
-              value={gastoMaximoMoneda}
-              onChange={(e) => { setGastoMaximoMoneda(e.target.value as MonedaBudget); setDirty(true); }}
-              className={selectClass}
-            >
-              <option value="Bs">Bs</option>
-              <option value="USD">USD</option>
-            </select>
-          </div>
-          {gastoMaximo && Number(gastoMaximo) > 0 && (
-            <p className="mt-1 text-xs text-muted">{getEquivalentBs(gastoMaximo, gastoMaximoMoneda)}</p>
-          )}
-        </div>
+        <MoneyInput
+          label="Gasto maximo esperado"
+          value={gastoMaximo}
+          onChange={(v) => { setGastoMaximo(v); setDirty(true); }}
+          moneda={gastoMaximoMoneda}
+          onMonedaChange={(m) => { setGastoMaximoMoneda(m); setDirty(true); }}
+        />
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Periodicidad</label>
@@ -176,26 +116,13 @@ export default function PresupuestoEditor({
         </div>
 
         {periodicidad === "rango" && (
-          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
-            <div>
-              <label className="text-sm font-medium text-foreground">Persistente</label>
-              <p className="text-xs text-muted">Al cerrar el período, crea automáticamente el siguiente con la misma duración.</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={persistente}
-              onClick={() => { setPersistente((v) => !v); setDirty(true); }}
-              className={`relative w-10 h-5 rounded-full transition-colors ${
-                persistente ? "bg-primary" : "bg-zinc-300 dark:bg-zinc-600"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-                  persistente ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
+          <div className="rounded-lg border border-border px-3 py-2.5">
+            <Switch
+              checked={persistente}
+              onChange={(v) => { setPersistente(v); setDirty(true); }}
+              label="Persistente"
+              description="Al cerrar el período, crea automáticamente el siguiente con la misma duración."
+            />
           </div>
         )}
 
