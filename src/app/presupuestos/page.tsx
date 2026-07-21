@@ -207,6 +207,7 @@ export default function PresupuestosPage() {
         gastoMaximoEsperado={Number(presupuesto?.gastoMaximoEsperado ?? 0)}
         gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
         onSave={handleSaveCat}
+        onUpdatePresupuesto={(data) => updatePresupuesto({ ...data, gastoMaximoEsperado: bs(data.gastoMaximoEsperado) })}
         onClose={() => { setModalOpen(false); setEditingCat(undefined); }}
       />
 

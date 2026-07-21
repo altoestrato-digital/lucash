@@ -25,6 +25,7 @@ export default function CategoriaEditor({
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
   onSave,
+  onUpdatePresupuesto,
   onClose,
 }: {
   open: boolean;
@@ -33,6 +34,7 @@ export default function CategoriaEditor({
   gastoMaximoEsperado: number;
   gastoMaximoEsperadoMoneda: MonedaBudget;
   onSave: (data: CategoriaDraft) => void;
+  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
   onClose: () => void;
 }) {
   return open ? (
@@ -43,6 +45,7 @@ export default function CategoriaEditor({
       gastoMaximoEsperado={gastoMaximoEsperado}
       gastoMaximoEsperadoMoneda={gastoMaximoEsperadoMoneda}
       onSave={onSave}
+      onUpdatePresupuesto={onUpdatePresupuesto}
       onClose={onClose}
     />
   ) : null;
@@ -54,6 +57,7 @@ function CategoriaEditorInner({
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
   onSave,
+  onUpdatePresupuesto,
   onClose,
 }: {
   cat?: Categoria;
@@ -61,6 +65,7 @@ function CategoriaEditorInner({
   gastoMaximoEsperado: number;
   gastoMaximoEsperadoMoneda: MonedaBudget;
   onSave: (data: CategoriaDraft) => void;
+  onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
   onClose: () => void;
 }) {
   const [nombre, setNombre] = useState(cat?.nombre ?? "");
@@ -110,6 +115,12 @@ function CategoriaEditorInner({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !limite) return;
+    if (excedeMaximo && onUpdatePresupuesto) {
+      onUpdatePresupuesto({
+        gastoMaximoEsperado: bs(totalConEsteBs),
+        gastoMaximoEsperadoMoneda: "Bs",
+      });
+    }
     onSave({
       nombre: nombre.trim(),
       color: color as HexColor,
@@ -120,6 +131,9 @@ function CategoriaEditorInner({
       orden: Number(orden),
     });
   };
+
+  const formatBs = (v: number) => v.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatUSD = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
@@ -186,8 +200,17 @@ function CategoriaEditorInner({
             {limite && Number(limite) > 0 && (
               <p className="mt-1 text-xs text-zinc-500">{getEquivalent(limite, limiteMoneda)}</p>
             )}
-            {excedeMaximo && (
-              <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+            {excedeMaximo ? (
+              <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 dark:bg-amber-950/40 dark:border-amber-800">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  Total de categorías: {gastoMaximoEsperadoMoneda === "USD" ? `USD ${formatUSD(totalConEsteBs / (gastoMaximoBs / gastoMaximoEsperado))}` : `Bs ${formatBs(totalConEsteBs)}`}. Excede el gasto máximo (Bs {formatBs(gastoMaximoBs)}) por Bs {formatBs(totalConEsteBs - gastoMaximoBs)}.
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                  Al guardar, el gasto máximo se actualizará automáticamente.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-1.5 text-xs text-zinc-500 flex items-center gap-1">
                 <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -233,9 +256,13 @@ function CategoriaEditorInner({
 
           <button
             type="submit"
-            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900 font-medium rounded-lg py-2.5 text-sm transition-colors"
+            className={`w-full font-medium rounded-lg py-2.5 text-sm transition-colors ${
+              excedeMaximo
+                ? "bg-amber-500 hover:bg-amber-600 text-white dark:bg-amber-600 dark:hover:bg-amber-700"
+                : "bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-900"
+            }`}
           >
-            {cat ? "Guardar cambios" : "Crear categoría"}
+            {excedeMaximo ? "Guardar y actualizar gasto máximo" : (cat ? "Guardar cambios" : "Crear categoría")}
           </button>
         </form>
       </div>
