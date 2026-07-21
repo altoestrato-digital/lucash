@@ -38,7 +38,13 @@ function getPeriodoRange(
     return { desde: periodo.desde, hasta: periodo.hasta };
   }
   if (periodo.tipo === "presupuesto" && presupuesto) {
-    return { desde: presupuesto.fechaInicio, hasta: presupuesto.fechaFin };
+    const inicioMes = new Date(presupuesto.fechaInicio);
+    inicioMes.setDate(1);
+    const finMes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + 1, 0);
+    return {
+      desde: inicioMes.toISOString().slice(0, 10),
+      hasta: finMes.toISOString().slice(0, 10),
+    };
   }
   return null;
 }
