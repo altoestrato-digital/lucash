@@ -86,9 +86,14 @@ export interface CoberturaCategoria {
 }
 
 export interface AlertaCobertura {
+  id: string;
   tipo: "sobregiro" | "basico" | "p2" | "p3" | "excedido" | "todo-cubierto";
   prioridad: number | null;
-  mensaje: string;
+  montoBs: Money;
+  monedaDefault: MonedaBudget;
+  excedidoBs?: Money;
+  faltanBs?: Money;
+  categoriaNombres: string[];
 }
 
 export interface ResumenCobertura {

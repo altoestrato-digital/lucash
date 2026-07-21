@@ -1,29 +1,14 @@
-import type { Presupuesto, ResumenCobertura, CoberturaCategoria, MonedaBudget, AlertaCobertura } from "@/types/presupuesto";
+import type { Presupuesto, ResumenCobertura, CoberturaCategoria, AlertaCobertura } from "@/types/presupuesto";
 import type { Transaccion } from "@/types/transaccion";
 import type { Money } from "@/lib/money";
 import { sum, sub, bs } from "@/lib/money";
-import { convertirAUSD, convertirABs } from "@/lib/conversion";
+import { toBs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
-
-const toBs = (monto: number, moneda: MonedaBudget): number => {
-  if (moneda === "Bs") return monto;
-  const usdValue = convertirAUSD(monto, "USD", toIso(new Date()));
-  return Number(convertirABs(usdValue, toIso(new Date())));
-};
-
-const fmtAmount = (value: Money, monedaPreferida: "Bs" | "USD"): string => {
-  if (monedaPreferida === "USD") {
-    const usdEq = convertirAUSD(Number(value), "Bs", toIso(new Date()));
-    return `USD ${Number(usdEq).toFixed(2)}`;
-  }
-  return `Bs ${Number(value).toFixed(2)}`;
-};
 
 export const calcularCobertura = (
   p: Presupuesto,
   txs: Transaccion[],
   disponibleCarteras?: Money,
-  monedaPreferida: "Bs" | "USD" = "Bs"
 ): ResumenCobertura => {
   const hoy = toIso(new Date());
 
@@ -49,7 +34,7 @@ export const calcularCobertura = (
       .filter((t) => t.tipo === "egreso" && t.categoriaId === s.id)
       .reduce((acc, t) => sum(acc, t.montoBs), bs(0));
 
-    const limiteBsValue = toBs(Number(s.limite), s.limiteMoneda);
+    const limiteBsValue = toBs(Number(s.limite), s.limiteMoneda, hoy);
 
     let estado: CoberturaCategoria["estado"];
     const ingresoReal = Number(ingresoRealBs);
@@ -83,28 +68,38 @@ export const calcularCobertura = (
     });
   }
 
-  const gastoMaximoBs = toBs(Number(p.gastoMaximoEsperado), p.gastoMaximoEsperadoMoneda);
-  const ingresoEsperadoBs = toBs(Number(p.ingresoEsperado), p.ingresoEsperadoMoneda);
+  const gastoMaximoBs = toBs(Number(p.gastoMaximoEsperado), p.gastoMaximoEsperadoMoneda, hoy);
+  const ingresoEsperadoBs = toBs(Number(p.ingresoEsperado), p.ingresoEsperadoMoneda, hoy);
 
-  const totalLimitesBs = activos.reduce((acc, s) => acc + toBs(Number(s.limite), s.limiteMoneda), 0);
+  const totalLimitesBs = activos.reduce((acc, s) => acc + toBs(Number(s.limite), s.limiteMoneda, hoy), 0);
   const excedidoMaximo = totalLimitesBs > gastoMaximoBs;
 
   let estadoGlobal: ResumenCobertura["estadoGlobal"] = "todo-cubierto";
-  let mensaje = "";
   const alertas: AlertaCobertura[] = [];
+  let alertaId = 0;
+  const nextId = () => `alerta-${alertaId++}`;
 
   if (excedidoMaximo) {
     estadoGlobal = "sobregiro";
-    const exceso = totalLimitesBs - gastoMaximoBs;
-    const excesoFormateado = p.gastoMaximoEsperadoMoneda === "USD"
-      ? `USD ${(exceso / Number(convertirABs(bs(1), hoy))).toFixed(2)}`
-      : `Bs ${exceso.toFixed(2)}`;
-    mensaje = `Las categorías exceden el gasto máximo esperado por ${excesoFormateado}.`;
-    alertas.push({ tipo: "excedido", prioridad: null, mensaje });
+    const exceso = bs(totalLimitesBs - gastoMaximoBs);
+    alertas.push({
+      id: nextId(),
+      tipo: "excedido",
+      prioridad: null,
+      montoBs: exceso,
+      monedaDefault: p.gastoMaximoEsperadoMoneda,
+      categoriaNombres: [],
+    });
   } else if (Number(disponibleBs) < 0) {
     estadoGlobal = "sobregiro";
-    mensaje = `Estás gastando más de lo que tienes. Te pasaste por ${fmtAmount(bs(Math.abs(Number(disponibleBs))), monedaPreferida)}.`;
-    alertas.push({ tipo: "sobregiro", prioridad: null, mensaje });
+    alertas.push({
+      id: nextId(),
+      tipo: "sobregiro",
+      prioridad: null,
+      montoBs: bs(Math.abs(Number(disponibleBs))),
+      monedaDefault: "Bs",
+      categoriaNombres: [],
+    });
   } else {
     const p1NoCubiertas = porCat.filter(
       (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 1
@@ -116,44 +111,56 @@ export const calcularCobertura = (
       (pc) => (pc.estado === "no-cubierto" || pc.estado === "excedido") && pc.prioridad === 3
     );
 
-    function buildMensaje(cats: typeof p1NoCubiertas): string {
+    const buildAlerta = (
+      cats: typeof p1NoCubiertas,
+      tipo: "basico" | "p2" | "p3",
+      prioridad: 1 | 2 | 3,
+    ): AlertaCobertura => {
       const excedidos = cats.filter((pc) => pc.estado === "excedido");
       const faltantes = cats.filter((pc) => pc.estado !== "excedido");
-      const partes: string[] = [];
-      if (excedidos.length > 0) {
-        const total = excedidos.reduce((acc, pc) => sum(acc, pc.excedidoBs), bs(0));
-        const nombres = excedidos.map((pc) => pc.nombre).join(", ");
-        partes.push(`Te excediste por ${fmtAmount(total, monedaPreferida)} en ${nombres}`);
-      }
-      if (faltantes.length > 0) {
-        const total = faltantes.reduce((acc, pc) => sum(acc, pc.faltanBs), bs(0));
-        const nombres = faltantes.map((pc) => pc.nombre).join(", ");
-        partes.push(`Te faltan ${fmtAmount(total, monedaPreferida)} para cubrir ${nombres}`);
-      }
-      return partes.join(". ") + ".";
-    }
+      const excedidoTotal = excedidos.length > 0
+        ? excedidos.reduce((acc, pc) => sum(acc, pc.excedidoBs), bs(0))
+        : undefined;
+      const faltanTotal = faltantes.length > 0
+        ? faltantes.reduce((acc, pc) => sum(acc, pc.faltanBs), bs(0))
+        : undefined;
+      const categoriaNombres = cats.map((pc) => pc.nombre);
+      return {
+        id: nextId(),
+        tipo,
+        prioridad,
+        montoBs: excedidoTotal ?? faltanTotal ?? bs(0),
+        monedaDefault: "Bs",
+        excedidoBs: excedidoTotal,
+        faltanBs: faltanTotal,
+        categoriaNombres,
+      };
+    };
 
     if (p1NoCubiertas.length > 0) {
       estadoGlobal = "falta-p1";
-      mensaje = buildMensaje(p1NoCubiertas);
-      alertas.push({ tipo: "basico", prioridad: 1, mensaje });
+      alertas.push(buildAlerta(p1NoCubiertas, "basico", 1));
     }
 
     if (p2NoCubiertas.length > 0) {
-      mensaje = buildMensaje(p2NoCubiertas);
-      alertas.push({ tipo: "p2", prioridad: 2, mensaje });
+      alertas.push(buildAlerta(p2NoCubiertas, "p2", 2));
     }
 
     if (p3NoCubiertas.length > 0) {
-      mensaje = buildMensaje(p3NoCubiertas);
-      alertas.push({ tipo: "p3", prioridad: 3, mensaje });
+      alertas.push(buildAlerta(p3NoCubiertas, "p3", 3));
     }
 
     if (alertas.length === 0) {
       estadoGlobal = "todo-cubierto";
       const sobrante = bs(Math.max(0, Number(disponibleBs) - totalLimitesBs));
-      mensaje = `Presupuesto cubierto. Sobran ${fmtAmount(sobrante, monedaPreferida)}.`;
-      alertas.push({ tipo: "todo-cubierto", prioridad: null, mensaje });
+      alertas.push({
+        id: nextId(),
+        tipo: "todo-cubierto",
+        prioridad: null,
+        montoBs: sobrante,
+        monedaDefault: "Bs",
+        categoriaNombres: [],
+      });
     } else if (!p1NoCubiertas.length) {
       if (p2NoCubiertas.length > 0) {
         estadoGlobal = "falta-p2";
@@ -162,6 +169,12 @@ export const calcularCobertura = (
       }
     }
   }
+
+  const mensajeGlobal = alertas[0]
+    ? (estadoGlobal === "todo-cubierto"
+        ? `Presupuesto cubierto. Sobran ${alertas[0].montoBs}.`
+        : "")
+    : "";
 
   return {
     ingresoEsperadoBs: bs(ingresoEsperadoBs),
@@ -175,7 +188,7 @@ export const calcularCobertura = (
     totalCats: activos.length,
     porCat,
     estadoGlobal,
-    mensaje,
+    mensaje: mensajeGlobal,
     alertas,
   };
 };

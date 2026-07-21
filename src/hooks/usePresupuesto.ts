@@ -7,11 +7,12 @@ import type {
   Presupuesto,
   PresupuestoSnapshot,
 } from "@/types/presupuesto";
-import { presupuestoRepo, snapshotsRepo, categoriasRepo, categoriaDetallesRepo, subscribe, isDBReady } from "@/lib/db";
+import { presupuestoRepo, snapshotsRepo, categoriasRepo, categoriaDetallesRepo, transaccionesRepo, subscribe, isDBReady } from "@/lib/db";
+import type { ISODate } from "@/lib/dates";
 import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
 import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
-import { bs } from "@/lib/money";
+import { calcularCobertura } from "@/lib/cobertura";
 import { toIso } from "@/lib/dates";
 import { usePreferencias } from "@/hooks/usePreferencias";
 
@@ -90,6 +91,12 @@ export function usePresupuesto(filtrarPorEspacio = true) {
     const current = presupuestoRepo.getActual(espacioId);
     if (!current) return;
 
+    const txsCerradas = transaccionesRepo.list().filter((t) => {
+      const fechaSolo = t.fecha.slice(0, 10) as ISODate;
+      return fechaSolo >= current.fechaInicio && fechaSolo <= current.fechaFin;
+    });
+    const coberturaCerrada = calcularCobertura(current, txsCerradas);
+
     const now = new Date().toISOString();
     const snapshot: PresupuestoSnapshot = {
       id: `snap-${Date.now()}`,
@@ -99,12 +106,12 @@ export function usePresupuesto(filtrarPorEspacio = true) {
       fechaFin: current.fechaFin,
       ingresoEsperado: current.ingresoEsperado,
       ingresoEsperadoMoneda: current.ingresoEsperadoMoneda,
-      ingresoRealBs: bs(0),
+      ingresoRealBs: coberturaCerrada.ingresoRealBs,
       gastoMaximoEsperado: current.gastoMaximoEsperado,
       gastoMaximoEsperadoMoneda: current.gastoMaximoEsperadoMoneda,
       categorias: [...current.categorias],
-      transaccionesIds: [],
-      balanceBs: bs(0),
+      transaccionesIds: txsCerradas.map((t) => t.id),
+      balanceBs: coberturaCerrada.balanceBs,
       createdAt: now,
       updatedAt: now,
     };

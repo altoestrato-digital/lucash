@@ -6,10 +6,12 @@ import { useCobertura } from "@/hooks/useCobertura";
 import { usePeriodoCerrado } from "@/hooks/usePeriodoCerrado";
 import { useTransacciones } from "@/hooks/useHistorial";
 import { useCarteras } from "@/hooks/useCarteras";
-import { getResumen } from "@/hooks/useResumenCarteras";
+import { useResumenCarteras } from "@/hooks/useResumenCarteras";
 import { usePreferencias } from "@/hooks/usePreferencias";
 import { toIso } from "@/lib/dates";
 import { bs } from "@/lib/money";
+import { convertirAMoneyValues } from "@/lib/conversion";
+import { sum } from "@/lib/money";
 import { useUIStore } from "@/stores/ui";
 import type { Categoria, CategoriaDetalle } from "@/types/presupuesto";
 import PresupuestoHeader from "@/components/presupuestos/PresupuestoHeader";
@@ -41,15 +43,18 @@ export default function PresupuestosPage() {
   const [editingCat, setEditingCat] = useState<Categoria | undefined>(undefined);
   const [detalleModalOpen, setDetalleModalOpen] = useState(false);
   const [detalleCategoria, setDetalleCategoria] = useState<Categoria | undefined>(undefined);
-  const [detallesList, setDetallesList] = useState<CategoriaDetalle[]>([]);
 
   const transacciones = useTransacciones();
   const { carteras } = useCarteras();
-  const resumenCarteras = getResumen(carteras);
+  const resumenCarteras = useResumenCarteras(carteras);
   const { preferencias, setCoberturaModo } = usePreferencias();
 
+  const hoy = toIso(new Date());
   const carterasCubrir = carteras.filter((c) => c.activo && c.objetivo === "cubrir-presupuesto");
-  const disponibleCubrirBs = bs(carterasCubrir.reduce((acc, c) => acc + c.saldo, 0));
+  const disponibleCubrirBs = carterasCubrir.reduce(
+    (acc, c) => sum(acc, convertirAMoneyValues(c.saldo, c.moneda, hoy).bs),
+    bs(0),
+  );
 
   const disponibleFinal = preferencias.coberturaModo === "carteras-cubrir" ? resumenCarteras.disponibleBs : disponibleCubrirBs;
 
@@ -64,6 +69,11 @@ export default function PresupuestosPage() {
     }
     return map;
   }, [presupuesto, listCategoriaDetalles]);
+
+  const detallesList = useMemo(
+    () => detalleCategoria ? listCategoriaDetalles(detalleCategoria.id) : [],
+    [detalleCategoria, listCategoriaDetalles]
+  );
 
   const handleSave = useCallback((data: Partial<typeof presupuesto>) => {
     if (data) updatePresupuesto(data);
@@ -99,33 +109,23 @@ export default function PresupuestosPage() {
 
   const handleOpenDetalles = useCallback((cat: Categoria) => {
     setDetalleCategoria(cat);
-    setDetallesList(listCategoriaDetalles(cat.id));
     setDetalleModalOpen(true);
-  }, [listCategoriaDetalles]);
+  }, []);
 
   const handleAddDetalle = useCallback((data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => {
     addCategoriaDetalle(data);
-    if (detalleCategoria) {
-      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
-    }
     pushToast({ tone: "success", message: "Detalle creado" });
-  }, [addCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
+  }, [addCategoriaDetalle, pushToast]);
 
   const handleUpdateDetalle = useCallback((id: string, data: Partial<CategoriaDetalle>) => {
     updateCategoriaDetalle(id, data);
-    if (detalleCategoria) {
-      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
-    }
     pushToast({ tone: "success", message: "Detalle actualizado" });
-  }, [updateCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
+  }, [updateCategoriaDetalle, pushToast]);
 
   const handleDeleteDetalle = useCallback((id: string) => {
     softDeleteCategoriaDetalle(id);
-    if (detalleCategoria) {
-      setDetallesList(listCategoriaDetalles(detalleCategoria.id));
-    }
     pushToast({ tone: "success", message: "Detalle eliminado" });
-  }, [softDeleteCategoriaDetalle, detalleCategoria, listCategoriaDetalles, pushToast]);
+  }, [softDeleteCategoriaDetalle, pushToast]);
 
   const handleEmpezarNuevo = useCallback(() => {
     cerrarPeriodo();
