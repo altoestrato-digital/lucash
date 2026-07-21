@@ -25,6 +25,7 @@ import SnapshotBanner from "@/components/presupuestos/SnapshotBanner";
 export default function PresupuestosPage() {
   const {
     presupuesto,
+    version,
     updatePresupuesto,
     addCategoria,
     updateCategoria,
@@ -61,6 +62,8 @@ export default function PresupuestosPage() {
   const cobertura = useCobertura(presupuesto, transacciones, disponibleFinal);
   const periodoCerrado = usePeriodoCerrado(presupuesto);
 
+  // `version` fuerza re-derivación cuando cualquier tabla de la DB cambia,
+  // aunque el `presupuesto` no haya cambiado (ej: al agregar un detalle).
   const detallesMap = useMemo(() => {
     if (!presupuesto) return {};
     const map: Record<string, CategoriaDetalle[]> = {};
@@ -68,11 +71,13 @@ export default function PresupuestosPage() {
       map[cat.id] = listCategoriaDetalles(cat.id);
     }
     return map;
-  }, [presupuesto, listCategoriaDetalles]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presupuesto, listCategoriaDetalles, version]);
 
   const detallesList = useMemo(
     () => detalleCategoria ? listCategoriaDetalles(detalleCategoria.id) : [],
-    [detalleCategoria, listCategoriaDetalles]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [detalleCategoria, listCategoriaDetalles, version]
   );
 
   const handleSave = useCallback((data: Partial<typeof presupuesto>) => {

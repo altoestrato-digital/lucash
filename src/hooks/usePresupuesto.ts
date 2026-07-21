@@ -24,11 +24,13 @@ export function usePresupuesto(filtrarPorEspacio = true) {
     presupuestoRepo.getActual(espacioId),
   );
   const [snapshots, setSnapshots] = useState<PresupuestoSnapshot[]>(() => snapshotsRepo.list());
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     return subscribe(() => {
       setPresupuestoAll(presupuestoRepo.getActual(espacioId));
       setSnapshots(snapshotsRepo.list());
+      setVersion((v) => v + 1);
     });
   }, [espacioId]);
 
@@ -165,6 +167,7 @@ export function usePresupuesto(filtrarPorEspacio = true) {
   return {
     presupuesto,
     snapshots,
+    version,
     updatePresupuesto,
     addCategoria,
     updateCategoria,
