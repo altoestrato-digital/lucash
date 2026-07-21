@@ -6,7 +6,6 @@ import type { Presupuesto } from "@/types/presupuesto";
 import type { ISODate } from "@/lib/dates";
 import { toIso, addDays, formatDateShort } from "@/lib/dates";
 import { bs } from "@/lib/money";
-import { convertirAUSD } from "@/lib/conversion";
 import { TrendingUp } from "lucide-react";
 import {
   LineChart,
@@ -82,33 +81,33 @@ function agruparPorFecha(
   hasta: string,
   periodo: Periodo,
   moneda: "Bs" | "USD",
-): { fecha: string; label: string; ingresos: number; egresos: number; ingresosBs: number; egresosBs: number }[] {
+): { fecha: string; label: string; ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number }[] {
   const desdeDate = new Date(desde + "T12:00:00");
   const hastaDate = new Date(hasta + "T12:00:00");
   const totalDias = Math.max(1, Math.round((hastaDate.getTime() - desdeDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-  const hoy = toIso(new Date());
 
-  const buckets = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; order: number }>();
+  const buckets = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number; order: number }>();
 
-  const getMonto = (tx: Transaccion): [number, number] => {
+  const getMonto = (tx: Transaccion): [number, number, number] => {
     const bsVal = Number(tx.montoBs);
-    if (moneda === "USD") return [Number(convertirAUSD(bsVal, "Bs", hoy)), bsVal];
-    return [bsVal, bsVal];
+    const usdVal = Number(tx.montoUsd);
+    if (moneda === "USD") return [usdVal, bsVal, usdVal];
+    return [bsVal, bsVal, usdVal];
   };
 
   if (periodo === "dia") {
     for (let h = 0; h < 24; h++) {
       const hourKey = String(h).padStart(2, "0") + ":00";
-      buckets.set(hourKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, order: h });
+      buckets.set(hourKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: h });
     }
     for (const tx of txs) {
       const horaMatch = tx.fecha.includes("T") ? tx.fecha.slice(11, 13) : null;
       const h = horaMatch ? parseInt(horaMatch, 10) : 12;
       const hourKey = String(h).padStart(2, "0") + ":00";
       const b = buckets.get(hourKey)!;
-      const [monto, montoBs] = getMonto(tx);
-      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; }
-      else { b.egresos += monto; b.egresosBs += montoBs; }
+      const [monto, montoBs, montoUsd] = getMonto(tx);
+      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
+      else { b.egresos += monto; b.egresosBs += montoBs; b.egresosUsd += montoUsd; }
     }
     return Array.from(buckets.entries())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -119,24 +118,24 @@ function agruparPorFecha(
     for (const tx of txs) {
       const monthKey = tx.fecha.slice(0, 7);
       if (!buckets.has(monthKey)) {
-        buckets.set(monthKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, order: buckets.size });
+        buckets.set(monthKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: buckets.size });
       }
       const b = buckets.get(monthKey)!;
-      const [monto, montoBs] = getMonto(tx);
-      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; }
-      else { b.egresos += monto; b.egresosBs += montoBs; }
+      const [monto, montoBs, montoUsd] = getMonto(tx);
+      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
+      else { b.egresos += monto; b.egresosBs += montoBs; b.egresosUsd += montoUsd; }
     }
     return Array.from(buckets.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, val]) => {
         const [y, m] = key.split("-");
         const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-        return { fecha: key, label: `${monthNames[parseInt(m, 10) - 1]} ${y}`, ingresos: val.ingresos, egresos: val.egresos, ingresosBs: val.ingresosBs, egresosBs: val.egresosBs };
+        return { fecha: key, label: `${monthNames[parseInt(m, 10) - 1]} ${y}`, ...val };
       });
   }
 
   if (periodo === "mes" || totalDias > 14) {
-    const byWeek = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; order: number }>();
+    const byWeek = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number; order: number }>();
     for (const tx of txs) {
       const txDate = tx.fecha.includes("T") ? tx.fecha.slice(0, 10) : tx.fecha;
       const d = new Date(txDate + "T12:00:00");
@@ -145,47 +144,48 @@ function agruparPorFecha(
       const monday = addDays(txDate as ISODate, diffToMonday);
       const weekKey = monday;
       if (!byWeek.has(weekKey)) {
-        byWeek.set(weekKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, order: byWeek.size });
+        byWeek.set(weekKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: byWeek.size });
       }
       const b = byWeek.get(weekKey)!;
-      const [monto, montoBs] = getMonto(tx);
-      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; }
-      else { b.egresos += monto; b.egresosBs += montoBs; }
+      const [monto, montoBs, montoUsd] = getMonto(tx);
+      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
+      else { b.egresos += monto; b.egresosBs += montoBs; b.egresosUsd += montoUsd; }
     }
     return Array.from(byWeek.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, val]) => ({ fecha: key, label: formatDateShort(key as ISODate), ingresos: val.ingresos, egresos: val.egresos, ingresosBs: val.ingresosBs, egresosBs: val.egresosBs }));
+      .map(([key, val]) => ({ fecha: key, label: formatDateShort(key as ISODate), ...val }));
   }
 
   for (let d = new Date(desdeDate); d <= hastaDate; d.setDate(d.getDate() + 1)) {
     const iso = toIso(d);
     if (!buckets.has(iso)) {
-      buckets.set(iso, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, order: buckets.size });
+      buckets.set(iso, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: buckets.size });
     }
   }
   for (const tx of txs) {
     const txDate = tx.fecha.includes("T") ? tx.fecha.slice(0, 10) : tx.fecha;
     if (!buckets.has(txDate)) {
-      buckets.set(txDate, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, order: buckets.size });
+      buckets.set(txDate, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: buckets.size });
     }
     const b = buckets.get(txDate)!;
-    const [monto, montoBs] = getMonto(tx);
-    if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; }
-    else { b.egresos += monto; b.egresosBs += montoBs; }
+    const [monto, montoBs, montoUsd] = getMonto(tx);
+    if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
+    else { b.egresos += monto; b.egresosBs += montoBs; b.egresosUsd += montoUsd; }
   }
   return Array.from(buckets.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, val]) => ({ fecha: key, label: formatDateShort(key as ISODate), ingresos: val.ingresos, egresos: val.egresos, ingresosBs: val.ingresosBs, egresosBs: val.egresosBs }));
+    .map(([key, val]) => ({ fecha: key, label: formatDateShort(key as ISODate), ...val }));
 }
 
-function CustomTooltip({ active, payload, label, fromBs }: { active?: boolean; payload?: Array<{ value: number; dataKey: string; payload: { ingresosBs?: number; egresosBs?: number } }>; label?: string; fromBs: UseMonedaActivaReturn["fromBs"] }) {
+function CustomTooltip({ active, payload, label, formatPair }: { active?: boolean; payload?: Array<{ value: number; dataKey: string; payload: { ingresosBs?: number; egresosBs?: number; ingresosUsd?: number; egresosUsd?: number } }>; label?: string; formatPair: UseMonedaActivaReturn["formatPair"] }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl bg-surface-elevated border border-border px-4 py-3 shadow-xl">
       <p className="text-xs text-muted mb-2">{label}</p>
       {payload.map((p) => {
         const bsValue = p.dataKey === "ingresos" ? (p.payload.ingresosBs ?? p.value) : (p.payload.egresosBs ?? p.value);
-        const pair = fromBs(bs(bsValue));
+        const usdValue = p.dataKey === "ingresos" ? (p.payload.ingresosUsd ?? 0) : (p.payload.egresosUsd ?? 0);
+        const pair = formatPair(bs(bsValue), bs(usdValue));
         const color = p.dataKey === "ingresos" ? "text-emerald-500" : "text-rose-500";
         const icon = p.dataKey === "ingresos" ? "+" : "-";
         return (
@@ -201,7 +201,7 @@ function CustomTooltip({ active, payload, label, fromBs }: { active?: boolean; p
 }
 
 export default function IncomeExpenseChart({ transacciones, presupuesto }: Props) {
-  const { fromBs, moneda } = useMonedaActiva();
+  const { formatPair, moneda } = useMonedaActiva();
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [rangoDesde, setRangoDesde] = useState(() => {
     const d = new Date();
@@ -304,7 +304,7 @@ export default function IncomeExpenseChart({ transacciones, presupuesto }: Props
                 tickLine={false}
                 tickFormatter={formatTick}
               />
-              <Tooltip content={<CustomTooltip fromBs={fromBs} />} cursor={{ stroke: "var(--border)" }} wrapperStyle={{ backgroundColor: "transparent" }} />
+              <Tooltip content={<CustomTooltip formatPair={formatPair} />} cursor={{ stroke: "var(--border)" }} wrapperStyle={{ backgroundColor: "transparent" }} />
               <Line
                 type="monotone"
                 dataKey="ingresos"

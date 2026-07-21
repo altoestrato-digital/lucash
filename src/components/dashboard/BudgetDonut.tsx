@@ -11,13 +11,14 @@ interface BudgetDonutProps {
     nombre: string;
     color: string;
     gastadoBs: Money;
+    gastadoUsd: Money;
     porcentaje: number;
   }[];
 }
 
-function CustomTooltip({ active, payload, fromBs }: { active?: boolean; payload?: Array<{ value: number; payload: { label: string } }>; fromBs: UseMonedaActivaReturn["fromBs"] }) {
+function CustomTooltip({ active, payload, formatPair }: { active?: boolean; payload?: Array<{ value: number; payload: { label: string; montoBs: number; montoUsd: number } }>; formatPair: UseMonedaActivaReturn["formatPair"] }) {
   if (!active || !payload?.length) return null;
-  const pair = fromBs(bs(payload[0].value));
+  const pair = formatPair(bs(payload[0].payload.montoBs), bs(payload[0].payload.montoUsd));
   return (
     <div className="rounded-xl bg-surface-elevated border border-border px-4 py-3 shadow-xl">
       <p className="text-xs text-muted mb-1">{payload[0].payload.label}</p>
@@ -28,13 +29,16 @@ function CustomTooltip({ active, payload, fromBs }: { active?: boolean; payload?
 }
 
 export default function BudgetDonut({ gastosPorCategoria }: BudgetDonutProps) {
-  const { fromBs } = useMonedaActiva();
-  const totalGastado = gastosPorCategoria.reduce((a, g) => a + Number(g.gastadoBs), 0);
-  const totalPair = fromBs(bs(totalGastado));
+  const { formatPair, moneda } = useMonedaActiva();
+  const totalGastadoBs = gastosPorCategoria.reduce((a, g) => a + Number(g.gastadoBs), 0);
+  const totalGastadoUsd = gastosPorCategoria.reduce((a, g) => a + Number(g.gastadoUsd), 0);
+  const totalPair = formatPair(bs(totalGastadoBs), bs(totalGastadoUsd));
 
   const data = gastosPorCategoria.map((g) => ({
     name: g.nombre,
-    value: Number(g.gastadoBs),
+    value: moneda === "USD" ? Number(g.gastadoUsd) : Number(g.gastadoBs),
+    montoBs: Number(g.gastadoBs),
+    montoUsd: Number(g.gastadoUsd),
     label: g.nombre,
     color: g.color,
   }));
@@ -69,7 +73,7 @@ export default function BudgetDonut({ gastosPorCategoria }: BudgetDonutProps) {
                   <Cell key={i} fill={entry.color} className="transition-all duration-200 hover:opacity-80" />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip fromBs={fromBs} />} wrapperStyle={{ backgroundColor: "transparent" }} />
+              <Tooltip content={<CustomTooltip formatPair={formatPair} />} wrapperStyle={{ backgroundColor: "transparent" }} />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">

@@ -1,8 +1,6 @@
 "use client";
 
 import { bs, type Money } from "@/lib/money";
-import { convertirAUSD } from "@/lib/conversion";
-import { toIso } from "@/lib/dates";
 import { BarChart3 } from "lucide-react";
 import {
   BarChart,
@@ -22,13 +20,14 @@ interface SpendingChartProps {
     nombre: string;
     color: string;
     gastadoBs: Money;
+    gastadoUsd: Money;
     porcentaje: number;
   }[];
 }
 
-function CustomTooltip({ active, payload, label, fromBs }: { active?: boolean; payload?: Array<{ value: number; payload: { color: string; montoBs: number } }>; label?: string; fromBs: UseMonedaActivaReturn["fromBs"] }) {
+function CustomTooltip({ active, payload, label, formatPair }: { active?: boolean; payload?: Array<{ value: number; payload: { color: string; montoBs: number; montoUsd: number } }>; label?: string; formatPair: UseMonedaActivaReturn["formatPair"] }) {
   if (!active || !payload?.length) return null;
-  const pair = fromBs(bs(payload[0].payload.montoBs));
+  const pair = formatPair(bs(payload[0].payload.montoBs), bs(payload[0].payload.montoUsd));
   return (
     <div className="rounded-xl bg-surface-elevated border border-border px-4 py-3 shadow-xl">
       <div className="flex items-center gap-2 mb-1">
@@ -42,12 +41,12 @@ function CustomTooltip({ active, payload, label, fromBs }: { active?: boolean; p
 }
 
 export default function SpendingChart({ gastosPorCategoria }: SpendingChartProps) {
-  const { fromBs, moneda } = useMonedaActiva();
-  const hoy = toIso(new Date());
+  const { formatPair, moneda } = useMonedaActiva();
   const chartData = gastosPorCategoria.map((g) => ({
     name: g.nombre.length > 10 ? g.nombre.slice(0, 10) + "…" : g.nombre,
-    monto: moneda === "USD" ? Number(convertirAUSD(Number(g.gastadoBs), "Bs", hoy)) : Number(g.gastadoBs),
+    monto: moneda === "USD" ? Number(g.gastadoUsd) : Number(g.gastadoBs),
     montoBs: Number(g.gastadoBs),
+    montoUsd: Number(g.gastadoUsd),
     color: g.color,
   }));
 
@@ -91,7 +90,7 @@ export default function SpendingChart({ gastosPorCategoria }: SpendingChartProps
                 tickLine={false}
                 tickFormatter={formatTick}
               />
-              <Tooltip content={<CustomTooltip fromBs={fromBs} />} cursor={{ fill: "transparent" }} wrapperStyle={{ backgroundColor: "transparent" }} />
+              <Tooltip content={<CustomTooltip formatPair={formatPair} />} cursor={{ fill: "transparent" }} wrapperStyle={{ backgroundColor: "transparent" }} />
               <Bar dataKey="monto" radius={[6, 6, 0, 0]} maxBarSize={48} activeBar={{ fillOpacity: 1, stroke: "none" }}>
                 {chartData.map((entry, i) => (
                   <Cell key={i} fill={entry.color} fillOpacity={0.85} />
