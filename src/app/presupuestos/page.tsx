@@ -16,7 +16,6 @@ import { espacioTrabajoRepo, subscribe } from "@/lib/db";
 import { useUIStore } from "@/stores/ui";
 import type { Categoria, CategoriaDetalle, MonedaBudget } from "@/types/presupuesto";
 import type { EspacioTrabajo } from "@/types/espacio-trabajo";
-import type { Moneda } from "@/types/cartera";
 import PresupuestoHeader from "@/components/presupuestos/PresupuestoHeader";
 import PresupuestosTabs from "@/components/presupuestos/PresupuestosTabs";
 import PresupuestoResumen from "@/components/presupuestos/PresupuestoResumen";
@@ -63,8 +62,7 @@ export default function PresupuestosPage() {
     () => espacios.find((e) => e.id === preferencias.espacioTrabajoId) ?? espacios[0],
     [espacios, preferencias.espacioTrabajoId]
   );
-  const monedaDefaultEspacio: Moneda = espacioActivo?.monedaDefault ?? "Bs";
-  const monedaDefaultBudget: MonedaBudget = (monedaDefaultEspacio === "USD" || monedaDefaultEspacio === "USDT") ? "USD" : "Bs";
+  const monedaDefaultBudget: MonedaBudget = espacioActivo?.monedaDefault === "USD" ? "USD" : "Bs";
 
   const hoy = toIso(new Date());
   const carterasCubrir = carteras.filter((c) => c.activo && c.objetivo === "cubrir-presupuesto");
