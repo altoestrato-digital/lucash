@@ -4,6 +4,8 @@ import { useCallback, useEffect } from "react";
 import type { MonedaPreferida, FormatoFecha, InicioSemana, Tema, Idioma, CoberturaModo } from "@/types/perfil";
 import { PREFERENCIAS_DEFAULT } from "@/types/perfil";
 import { usePerfil } from "@/hooks/usePerfil";
+import { espacioTrabajoRepo } from "@/lib/db";
+import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 
 export function usePreferencias() {
   const { perfil, updatePerfil } = usePerfil();
@@ -24,6 +26,13 @@ export function usePreferencias() {
 
   const setMoneda = useCallback((v: MonedaPreferida) => {
     updatePerfil({ preferencias: { ...preferencias, moneda: v } });
+    const espacioId = preferencias.espacioTrabajoId as EspacioTrabajoId | undefined;
+    if (espacioId) {
+      const espacio = espacioTrabajoRepo.getById(espacioId);
+      if (espacio && espacio.monedaDefault !== v) {
+        espacioTrabajoRepo.update(espacioId, { monedaDefault: v });
+      }
+    }
   }, [preferencias, updatePerfil]);
 
   const setFormatoFecha = useCallback((v: FormatoFecha) => {

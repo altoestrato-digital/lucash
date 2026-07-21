@@ -46,7 +46,7 @@ export default function DashboardPage() {
     if (initializedRef.current) return;
     initializedRef.current = true;
     if (espacioTrabajoRepo.list().length === 0) {
-      espacioTrabajoRepo.create({ nombre: "Personal", esDefault: true, monedaDefault: "Bs" });
+      espacioTrabajoRepo.create({ nombre: "Personal", esDefault: true, monedaDefault: preferencias.moneda });
     }
     if (!preferencias.espacioTrabajoId) {
       const despues = espacioTrabajoRepo.list();
@@ -54,7 +54,7 @@ export default function DashboardPage() {
         setEspacioTrabajoId(despues[0].id);
       }
     }
-  }, [preferencias.espacioTrabajoId, setEspacioTrabajoId]);
+  }, [preferencias.espacioTrabajoId, preferencias.moneda, setEspacioTrabajoId]);
 
   useEffect(() => {
     return subscribe(() => {
