@@ -4,17 +4,20 @@ import { getDB, persist, notifyChange, withTransaction, queryAll } from "../clie
 import type { SqlValue } from "sql.js";
 import type { CategoriaDetalle } from "@/types/presupuesto";
 import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
-import { bs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { hexColor } from "@/types/hex-color";
+import type { MonedaBudget } from "@/types/presupuesto";
 
 type Row = Record<string, unknown>;
 
 function rowToCategoriaDetalle(row: Row): CategoriaDetalle {
+  const moneda = (row.moneda as MonedaBudget) ?? "Bs";
   return {
     id: row.id as CategoriaDetalleId,
     categoriaId: row.categoria_id as CategoriaId,
     nombre: row.nombre as string,
-    montoEstimado: bs(row.monto_estimado as number),
+    montoEstimado: moneda === "USD" ? usd(row.monto_estimado as number) : bs(row.monto_estimado as number),
+    moneda,
     orden: row.orden as number,
     color: hexColor(row.color as string),
     activo: Boolean(row.activo),
@@ -39,9 +42,9 @@ export const categoriaDetallesRepo = {
       const now = new Date().toISOString();
       const db = getDB();
       db.run(
-        `INSERT INTO categoria_detalle (id, categoria_id, nombre, monto_estimado, orden, color, activo, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-        [id, d.categoriaId, d.nombre, Number(d.montoEstimado), d.orden, d.color, now, now],
+        `INSERT INTO categoria_detalle (id, categoria_id, nombre, monto_estimado, moneda, orden, color, activo, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+        [id, d.categoriaId, d.nombre, Number(d.montoEstimado), d.moneda ?? "Bs", d.orden, d.color, now, now],
       );
       return {
         ...d,
@@ -62,6 +65,7 @@ export const categoriaDetallesRepo = {
 
     if (data.nombre !== undefined) { fields.push("nombre = ?"); values.push(data.nombre); }
     if (data.montoEstimado !== undefined) { fields.push("monto_estimado = ?"); values.push(Number(data.montoEstimado)); }
+    if (data.moneda !== undefined) { fields.push("moneda = ?"); values.push(data.moneda); }
     if (data.orden !== undefined) { fields.push("orden = ?"); values.push(data.orden); }
     if (data.color !== undefined) { fields.push("color = ?"); values.push(data.color); }
     if (data.activo !== undefined) { fields.push("activo = ?"); values.push(data.activo ? 1 : 0); }

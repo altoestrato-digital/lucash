@@ -154,6 +154,13 @@ export async function initDB(): Promise<Database> {
   }
 
   dbInstance.exec(SCHEMA_SQL);
+
+  try {
+    dbInstance.run("ALTER TABLE categoria_detalle ADD COLUMN moneda TEXT NOT NULL DEFAULT 'Bs'");
+  } catch {
+    // Column already exists — safe to ignore
+  }
+
   await persistNow();
   return dbInstance;
 }

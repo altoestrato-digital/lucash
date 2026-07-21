@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { CategoriaDetalle } from "@/types/presupuesto";
 import type { MonedaBudget } from "@/types/presupuesto";
 import type { HexColor } from "@/types/hex-color";
-import { bs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 import type { CategoriaId } from "@/types/transaccion";
 import ColorPicker from "./ColorPicker";
@@ -38,7 +38,7 @@ export default function CategoriaDetalleEditor({
   const [color, setColor] = useState("#3B82F6");
   const [orden, setOrden] = useState("1");
 
-  const { fromBs } = useMonedaActiva();
+  const { fromCartera } = useMonedaActiva();
 
   const resetForm = () => {
     setEditingId(null);
@@ -55,6 +55,7 @@ export default function CategoriaDetalleEditor({
     setEditingId(d.id);
     setNombre(d.nombre);
     setMontoInput(String(Number(d.montoEstimado)));
+    setMoneda(d.moneda);
     setColor(d.color);
     setOrden(String(d.orden));
     setFormOpen(true);
@@ -66,7 +67,8 @@ export default function CategoriaDetalleEditor({
     const data = {
       categoriaId: categoriaId as CategoriaId,
       nombre: nombre.trim(),
-      montoEstimado: bs(montoNum),
+      montoEstimado: moneda === "USD" ? usd(montoNum) : bs(montoNum),
+      moneda,
       orden: parseInt(orden, 10) || 1,
       color: color as HexColor,
     };
@@ -115,7 +117,7 @@ export default function CategoriaDetalleEditor({
             </p>
           )}
           {detalles.map((d) => {
-            const pair = fromBs(d.montoEstimado);
+            const pair = fromCartera(Number(d.montoEstimado), d.moneda);
             return (
               <div
                 key={d.id}

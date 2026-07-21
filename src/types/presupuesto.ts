@@ -14,6 +14,7 @@ export interface CategoriaDetalle {
   categoriaId: CategoriaId;
   nombre: string;
   montoEstimado: Money;
+  moneda: MonedaBudget;
   orden: number;
   color: HexColor;
   activo: boolean;

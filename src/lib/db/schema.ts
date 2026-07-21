@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS categoria_detalle (
   categoria_id TEXT NOT NULL,
   nombre TEXT NOT NULL,
   monto_estimado REAL NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'Bs',
   orden INTEGER NOT NULL,
   color TEXT NOT NULL,
   activo INTEGER NOT NULL DEFAULT 1,
