@@ -5,7 +5,7 @@ import type { CategoriaDetalle, Categoria, MonedaBudget } from "@/types/presupue
 import type { HexColor } from "@/types/hex-color";
 import { bs, usd, type Money } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
-import { convertirABs } from "@/lib/conversion";
+import { convertirAMoneyValues } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import type { CategoriaId } from "@/types/transaccion";
 import ColorPicker from "./ColorPicker";
@@ -15,6 +15,7 @@ interface CategoriaDetalleEditorProps {
   categoriaId: string;
   categoriaNombre: string;
   categoriaLimite: Money;
+  categoriaLimiteMoneda: MonedaBudget;
   detalles: CategoriaDetalle[];
   onAdd: (data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => void;
   onUpdate: (id: string, data: Partial<CategoriaDetalle>) => void;
@@ -28,6 +29,7 @@ export default function CategoriaDetalleEditor({
   categoriaId,
   categoriaNombre,
   categoriaLimite,
+  categoriaLimiteMoneda,
   detalles,
   onAdd,
   onUpdate,
@@ -59,13 +61,13 @@ export default function CategoriaDetalleEditor({
     let total = 0;
     for (const d of detalles) {
       if (excludeId && d.id === excludeId) continue;
-      total += Number(convertirABs(d.montoEstimado, hoy));
+      total += Number(convertirAMoneyValues(Number(d.montoEstimado), d.moneda, hoy).bs);
     }
-    total += Number(convertirABs(monedaNueva === "USD" ? usd(montoNuevo) : bs(montoNuevo), hoy));
+    total += Number(convertirAMoneyValues(montoNuevo, monedaNueva, hoy).bs);
     return total as Money;
   };
 
-  const limiteBs = convertirABs(categoriaLimite, hoy);
+  const limiteBs = convertirAMoneyValues(Number(categoriaLimite), categoriaLimiteMoneda, hoy).bs;
 
   if (!open) return null;
 

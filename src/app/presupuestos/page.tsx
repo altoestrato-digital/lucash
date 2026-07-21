@@ -215,6 +215,7 @@ export default function PresupuestosPage() {
         categoriaId={detalleCategoria?.id ?? ""}
         categoriaNombre={detalleCategoria?.nombre ?? ""}
         categoriaLimite={detalleCategoria?.limite ?? bs(0)}
+        categoriaLimiteMoneda={detalleCategoria?.limiteMoneda ?? "Bs"}
         detalles={detallesList}
         onAdd={handleAddDetalle}
         onUpdate={handleUpdateDetalle}
