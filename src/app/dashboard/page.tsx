@@ -6,7 +6,7 @@ import { useCarteras } from "@/hooks/useCarteras";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
 import { usePerfil } from "@/hooks/usePerfil";
 import { usePreferencias } from "@/hooks/usePreferencias";
-import { espacioTrabajoRepo } from "@/lib/db";
+import { espacioTrabajoRepo, subscribe } from "@/lib/db";
 import { bs, usd, type Money } from "@/lib/money";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTransacciones } from "@/hooks/useHistorial";
@@ -37,14 +37,7 @@ export default function DashboardPage() {
   const dashboardData = useDashboardData(carteras, presupuesto, transacciones);
   const [drawerTx, setDrawerTx] = useState<Transaccion | null>(null);
 
-  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => {
-    const lista = espacioTrabajoRepo.list();
-    if (lista.length === 0) {
-      const personal = espacioTrabajoRepo.create({ nombre: "Personal", esDefault: true, monedaDefault: "Bs" });
-      return [personal];
-    }
-    return lista;
-  });
+  const [espacios, setEspacios] = useState<EspacioTrabajo[]>(() => espacioTrabajoRepo.list());
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEspacio, setEditingEspacio] = useState<EspacioTrabajo | undefined>();
   const initializedRef = useRef(false);
@@ -52,14 +45,21 @@ export default function DashboardPage() {
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
-    if (!preferencias.espacioTrabajoId && espacios.length > 0) {
-      setEspacioTrabajoId(espacios[0].id);
+    if (espacioTrabajoRepo.list().length === 0) {
+      espacioTrabajoRepo.create({ nombre: "Personal", esDefault: true, monedaDefault: "Bs" });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!preferencias.espacioTrabajoId) {
+      const despues = espacioTrabajoRepo.list();
+      if (despues.length > 0) {
+        setEspacioTrabajoId(despues[0].id);
+      }
+    }
+  }, [preferencias.espacioTrabajoId, setEspacioTrabajoId]);
 
-  const refreshEspacios = useCallback(() => {
-    setEspacios(espacioTrabajoRepo.list());
+  useEffect(() => {
+    return subscribe(() => {
+      setEspacios(espacioTrabajoRepo.list());
+    });
   }, []);
 
   const handleSelectEspacio = useCallback((id: string) => {
@@ -83,10 +83,9 @@ export default function DashboardPage() {
       const nuevo = espacioTrabajoRepo.create({ ...data, esDefault: false });
       setEspacioTrabajoId(nuevo.id);
     }
-    refreshEspacios();
     setEditorOpen(false);
     setEditingEspacio(undefined);
-  }, [editingEspacio, setEspacioTrabajoId, refreshEspacios]);
+  }, [editingEspacio, setEspacioTrabajoId]);
 
   const carterasNoLiquidas = carteras.filter((c) => c.activo && !esLiquida(c));
   const activas = carteras.filter((c) => c.activo);
