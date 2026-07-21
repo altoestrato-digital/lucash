@@ -100,7 +100,8 @@ export function useHistorial(presupuesto: Presupuesto | null) {
   const filtradas = useMemo(() => {
     let result = transacciones;
     if (rango) {
-      result = result.filter((tx) => tx.fecha >= rango.desde && tx.fecha <= rango.hasta);
+      const hastaCompleto = rango.hasta + "T23:59:59";
+      result = result.filter((tx) => tx.fecha >= rango.desde && tx.fecha <= hastaCompleto);
     }
     return result.filter((tx) => matchesFiltro(tx, filtro));
   }, [transacciones, rango, filtro]);
