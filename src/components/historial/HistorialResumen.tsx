@@ -9,10 +9,10 @@ interface HistorialResumenProps {
 }
 
 export default function HistorialResumen({ resumen }: HistorialResumenProps) {
-  const { fromBs } = useMonedaActiva();
-  const ingresos = fromBs(resumen.ingresosBs);
-  const egresos = fromBs(resumen.egresosBs);
-  const balance = fromBs(resumen.balanceBs);
+  const { formatPair } = useMonedaActiva();
+  const ingresos = formatPair(resumen.ingresosBs, resumen.ingresosUsd);
+  const egresos = formatPair(resumen.egresosBs, resumen.egresosUsd);
+  const balance = formatPair(resumen.balanceBs, resumen.balanceUsd);
 
   const items = [
     { label: "Ingresos", value: ingresos.primary, icon: ArrowUpRight, color: "text-emerald-500", bg: "bg-emerald-500/10" },

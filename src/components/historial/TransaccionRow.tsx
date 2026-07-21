@@ -12,8 +12,8 @@ interface TransaccionRowProps {
 
 export default function TransaccionRow({ transaccion: tx, onClick }: TransaccionRowProps) {
   const isIngreso = tx.tipo === "ingreso";
-  const { fromBs } = useMonedaActiva();
-  const pair = fromBs(tx.montoBs);
+  const { formatPair } = useMonedaActiva();
+  const pair = formatPair(tx.montoBs, tx.montoUsd);
 
   return (
     <div
