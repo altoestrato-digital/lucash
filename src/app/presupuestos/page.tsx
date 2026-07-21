@@ -151,7 +151,7 @@ export default function PresupuestosPage() {
         <button
           onClick={() => {
             const hoy = new Date();
-            const inicio = toIso(hoy);
+            const inicio = toIso(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
             const fin = toIso(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0));
             updatePresupuesto({
               nombre: "Presupuesto general",

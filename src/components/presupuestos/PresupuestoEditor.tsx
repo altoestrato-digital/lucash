@@ -5,6 +5,7 @@ import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudg
 import type { ISODate } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { toIso } from "@/lib/dates";
+import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import PeriodicidadSelect from "./PeriodicidadSelect";
 import CategoriaRow from "./CategoriaRow";
 import MoneyInput from "./MoneyInput";
@@ -61,6 +62,10 @@ export default function PresupuestoEditor({
       const { inicio, fin } = defaultRangoFechas();
       setFechaInicio(inicio);
       setFechaFin(fin);
+    } else {
+      const r = calcularRangoPeriodo(new Date(), p, corteDia);
+      setFechaInicio(r.fechaInicio);
+      setFechaFin(r.fechaFin);
     }
   };
 
