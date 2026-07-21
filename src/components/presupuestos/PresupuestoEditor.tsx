@@ -35,14 +35,16 @@ export default function PresupuestoEditor({
   detallesMap?: Record<string, CategoriaDetalle[]>;
   monedaDefault: MonedaBudget;
 }) {
+  const esNuevo = presupuesto.categorias.length === 0
+    && Number(presupuesto.ingresoEsperado) === 0
+    && Number(presupuesto.gastoMaximoEsperado) === 0;
+  const monedaInicial: MonedaBudget = esNuevo ? monedaDefault : presupuesto.ingresoEsperadoMoneda;
+  const monedaGastoInicial: MonedaBudget = esNuevo ? monedaDefault : presupuesto.gastoMaximoEsperadoMoneda;
+
   const [ingreso, setIngreso] = useState(String(Number(presupuesto.ingresoEsperado)));
-  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(
-    presupuesto.ingresoEsperadoMoneda || monedaDefault
-  );
+  const [ingresoMoneda, setIngresoMoneda] = useState<MonedaBudget>(monedaInicial);
   const [gastoMaximo, setGastoMaximo] = useState(String(Number(presupuesto.gastoMaximoEsperado)));
-  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(
-    presupuesto.gastoMaximoEsperadoMoneda || monedaDefault
-  );
+  const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(monedaGastoInicial);
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>(presupuesto.periodicidad);
   const [corteDia, setCorteDia] = useState<1 | 16>(presupuesto.quincenaCorteDia ?? 1);
   const [fechaInicio, setFechaInicio] = useState<ISODate>(presupuesto.fechaInicio);
