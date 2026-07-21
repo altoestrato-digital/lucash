@@ -27,13 +27,18 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
   const isIngreso = state.tipo === "ingreso";
   const { activa } = useDolarApiForDate(extractDate(state.fecha));
 
+  const tasaManual = parseFloat(state.tasaBcv);
+  const tasaParaCalculo = !isNaN(tasaManual) && tasaManual > 0
+    ? tasaManual
+    : (activa ?? 0);
+
   useEffect(() => {
-    if (!activa || activa <= 0) return;
+    if (!tasaParaCalculo || tasaParaCalculo <= 0) return;
 
     if (state.lastEditedField === "montoBs") {
       const bsVal = parseFloat(state.montoBs);
       if (!isNaN(bsVal) && bsVal > 0) {
-        const usdVal = (bsVal / activa).toFixed(2);
+        const usdVal = (bsVal / tasaParaCalculo).toFixed(2);
         if (usdVal !== state.montoUsd) {
           onUpdateField("montoUsd", usdVal);
         }
@@ -43,7 +48,7 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
     } else if (state.lastEditedField === "montoUsd") {
       const usdVal = parseFloat(state.montoUsd);
       if (!isNaN(usdVal) && usdVal > 0) {
-        const bsVal = (usdVal * activa).toFixed(2);
+        const bsVal = (usdVal * tasaParaCalculo).toFixed(2);
         if (bsVal !== state.montoBs) {
           onUpdateField("montoBs", bsVal);
         }
@@ -51,7 +56,7 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
         onUpdateField("montoBs", "");
       }
     }
-  }, [state.montoBs, state.montoUsd, state.lastEditedField, activa, onUpdateField]);
+  }, [state.montoBs, state.montoUsd, state.lastEditedField, tasaParaCalculo, onUpdateField]);
 
   const inputClass = "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
   const labelClass = "text-sm font-medium text-foreground";
