@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import type { Preferencias, MonedaPreferida, FormatoFecha, InicioSemana, Tema, Idioma, FuenteTasaPreferida, CoberturaModo } from "@/types/perfil";
+import { useUIStore } from "@/stores/ui";
 
 interface PreferenciasTabProps {
   preferencias: Preferencias;
@@ -66,15 +67,14 @@ export default function PreferenciasTab({
   onFuenteTasaChange,
   onCoberturaModoChange,
 }: PreferenciasTabProps) {
-  const [toast, setToast] = useState(false);
+  const pushToast = useUIStore((s) => s.pushToast);
 
   const handleChange = useCallback(
     <T,>(fn: (v: T) => void, value: T) => {
       fn(value);
-      setToast(true);
-      setTimeout(() => setToast(false), 1500);
+      pushToast({ tone: "success", message: "Guardado" });
     },
-    []
+    [pushToast]
   );
 
   return (
@@ -170,12 +170,6 @@ export default function PreferenciasTab({
           disabledOptions={[{ value: "en" as Idioma, tooltip: "Próximamente" }]}
         />
       </div>
-
-      {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-surface-elevated border border-border text-foreground text-sm rounded-xl shadow-lg z-50 animate-fade-in">
-          Guardado
-        </div>
-      )}
     </div>
   );
 }

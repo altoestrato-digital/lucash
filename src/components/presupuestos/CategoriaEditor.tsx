@@ -62,7 +62,7 @@ function CategoriaEditorForm({
   onClose,
 }: CategoriaEditorFormProps) {
   const [nombre, setNombre] = useState(cat?.nombre ?? "");
-  const [color, setColor] = useState(cat?.color ?? "#3B82F6");
+  const [color, setColor] = useState<HexColor>((cat?.color ?? "#3B82F6") as HexColor);
   const [limite, setLimite] = useState(cat ? String(Number(cat.limite)) : "");
   const [limiteMoneda, setLimiteMoneda] = useState<MonedaBudget>(cat?.limiteMoneda ?? monedaDefault);
   const [prioridad, setPrioridad] = useState<1 | 2 | 3>(cat?.prioridad ?? 2);

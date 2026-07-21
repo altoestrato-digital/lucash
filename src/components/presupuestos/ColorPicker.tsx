@@ -1,5 +1,8 @@
 "use client";
 
+import type { HexColor } from "@/types/hex-color";
+import { hexColor } from "@/types/hex-color";
+
 const colores = [
   "#10B981", "#3B82F6", "#8B5CF6", "#F97316",
   "#EF4444", "#F59E0B", "#6366F1", "#EC4899",
@@ -7,14 +10,16 @@ const colores = [
   "#F87171", "#FBBF24", "#818CF8", "#F472B6",
 ];
 
+const COLOR_SET = new Set(colores);
+
 export default function ColorPicker({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (color: string) => void;
+  value: HexColor;
+  onChange: (color: HexColor) => void;
 }) {
-  const isCustom = value && !colores.includes(value);
+  const isCustom = value && !COLOR_SET.has(value);
 
   return (
     <div className="space-y-3" role="radiogroup" aria-label="Color">
@@ -25,7 +30,7 @@ export default function ColorPicker({
             role="radio"
             aria-checked={value === c}
             type="button"
-            onClick={() => onChange(c)}
+            onClick={() => onChange(hexColor(c))}
             className={`h-7 w-7 rounded-full transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-400 dark:focus:ring-offset-zinc-900 ${value === c ? "ring-2 ring-zinc-500 ring-offset-2 dark:ring-offset-zinc-900 scale-110" : ""}`}
             style={{ backgroundColor: c }}
           >
@@ -42,7 +47,7 @@ export default function ColorPicker({
           <input
             type="color"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => onChange(hexColor(e.target.value))}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
           <span

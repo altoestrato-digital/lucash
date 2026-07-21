@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   Cartera,
   CarteraId,
@@ -30,9 +30,10 @@ export function useCarteras(filtrarPorEspacio = true) {
     });
   }, []);
 
-  const carteras = espacioId
-    ? carterasAll.filter((c) => c.espacioTrabajoId === espacioId)
-    : carterasAll;
+  const carteras = useMemo(
+    () => (espacioId ? carterasAll.filter((c) => c.espacioTrabajoId === espacioId) : carterasAll),
+    [carterasAll, espacioId]
+  );
 
   const addCartera = useCallback((c: CarteraInput): Cartera => {
     return carterasRepo.add(c);

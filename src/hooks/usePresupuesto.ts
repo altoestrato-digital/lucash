@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   Categoria,
   CategoriaDetalle,
@@ -32,11 +32,15 @@ export function usePresupuesto(filtrarPorEspacio = true) {
     });
   }, [espacioId]);
 
-  const presupuesto = espacioId
-    ? presupuestoAll && presupuestoAll.espacioTrabajoId === espacioId
-      ? presupuestoAll
-      : null
-    : presupuestoAll;
+  const presupuesto = useMemo(
+    () =>
+      espacioId
+        ? presupuestoAll && presupuestoAll.espacioTrabajoId === espacioId
+          ? presupuestoAll
+          : null
+        : presupuestoAll,
+    [presupuestoAll, espacioId]
+  );
 
   const updatePresupuesto = useCallback((data: Partial<Presupuesto>) => {
     if (!isDBReady()) return;

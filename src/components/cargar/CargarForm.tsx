@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
 import type { Presupuesto } from "@/types/presupuesto";
 import type { Cartera } from "@/types/cartera";
 import type { CargarFormState } from "@/hooks/useCargarForm";
 import type { ISODateTime } from "@/lib/dates";
 import { extractDate } from "@/lib/dates";
 import { useDolarApiForDate } from "@/hooks/useDolarApiForDate";
+import { Field, TextInput, Textarea } from "@/components/ui/Field";
+import Button from "@/components/ui/Button";
 import CategoriaSelect from "./CategoriaSelect";
 import TasaBcvField from "./TasaBcvField";
 import CarteraSelect from "./CarteraSelect";
@@ -32,34 +33,31 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
     ? tasaManual
     : (activa ?? 0);
 
-  useEffect(() => {
+  const handleMontoBsChange = (raw: string) => {
+    onUpdateField("montoBs", raw);
+    onUpdateField("lastEditedField", "montoBs");
     if (!tasaParaCalculo || tasaParaCalculo <= 0) return;
-
-    if (state.lastEditedField === "montoBs") {
-      const bsVal = parseFloat(state.montoBs);
-      if (!isNaN(bsVal) && bsVal > 0) {
-        const usdVal = (bsVal / tasaParaCalculo).toFixed(2);
-        if (usdVal !== state.montoUsd) {
-          onUpdateField("montoUsd", usdVal);
-        }
-      } else if (state.montoBs === "") {
-        onUpdateField("montoUsd", "");
-      }
-    } else if (state.lastEditedField === "montoUsd") {
-      const usdVal = parseFloat(state.montoUsd);
-      if (!isNaN(usdVal) && usdVal > 0) {
-        const bsVal = (usdVal * tasaParaCalculo).toFixed(2);
-        if (bsVal !== state.montoBs) {
-          onUpdateField("montoBs", bsVal);
-        }
-      } else if (state.montoUsd === "") {
-        onUpdateField("montoBs", "");
-      }
+    const bsVal = parseFloat(raw);
+    if (raw === "" || isNaN(bsVal) || bsVal <= 0) {
+      onUpdateField("montoUsd", "");
+      return;
     }
-  }, [state.montoBs, state.montoUsd, state.lastEditedField, tasaParaCalculo, onUpdateField]);
+    const usdVal = (bsVal / tasaParaCalculo).toFixed(2);
+    onUpdateField("montoUsd", usdVal);
+  };
 
-  const inputClass = "w-full rounded-lg border border-border bg-surface-elevated px-3 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
-  const labelClass = "text-sm font-medium text-foreground";
+  const handleMontoUsdChange = (raw: string) => {
+    onUpdateField("montoUsd", raw);
+    onUpdateField("lastEditedField", "montoUsd");
+    if (!tasaParaCalculo || tasaParaCalculo <= 0) return;
+    const usdVal = parseFloat(raw);
+    if (raw === "" || isNaN(usdVal) || usdVal <= 0) {
+      onUpdateField("montoBs", "");
+      return;
+    }
+    const bsVal = (usdVal * tasaParaCalculo).toFixed(2);
+    onUpdateField("montoBs", bsVal);
+  };
 
   return (
     <div className="flex flex-col gap-5 px-4 py-6 w-full max-w-2xl mx-auto">
@@ -90,70 +88,49 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <label className={labelClass}>
-          {isIngreso ? "Emisor" : "Receptor"}
-        </label>
-        <input
-          type="text"
+      <Field label={isIngreso ? "Emisor" : "Receptor"}>
+        <TextInput
           value={state.emisorReceptor}
           onChange={(e) => onUpdateField("emisorReceptor", e.target.value)}
           placeholder={isIngreso ? "¿Quién te pagó?" : "¿A quién le pagaste?"}
-          className={inputClass}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <label className={labelClass}>Concepto</label>
-        <input
-          type="text"
+      <Field label="Concepto">
+        <TextInput
           value={state.concepto}
           onChange={(e) => onUpdateField("concepto", e.target.value)}
           placeholder="Ej: Pago de nomina, Supermercado"
-          className={inputClass}
         />
-      </div>
+      </Field>
 
       {!isIngreso && (
-        <div className="space-y-1.5">
-          <label className={labelClass}>Categoria</label>
+        <Field label="Categoria">
           <CategoriaSelect
             value={state.categoriaId}
             presupuesto={presupuesto}
             onChange={(id) => onUpdateField("categoriaId", id)}
           />
-        </div>
+        </Field>
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className={labelClass}>Monto en Bs</label>
-          <input
-            type="text"
+        <Field label="Monto en Bs">
+          <TextInput
             inputMode="decimal"
             value={state.montoBs}
-            onChange={(e) => {
-              onUpdateField("montoBs", e.target.value);
-              onUpdateField("lastEditedField", "montoBs");
-            }}
+            onChange={(e) => handleMontoBsChange(e.target.value)}
             placeholder="0.00"
-            className={inputClass}
           />
-        </div>
-        <div className="space-y-1.5">
-          <label className={labelClass}>Monto en USD</label>
-          <input
-            type="text"
+        </Field>
+        <Field label="Monto en USD">
+          <TextInput
             inputMode="decimal"
             value={state.montoUsd}
-            onChange={(e) => {
-              onUpdateField("montoUsd", e.target.value);
-              onUpdateField("lastEditedField", "montoUsd");
-            }}
+            onChange={(e) => handleMontoUsdChange(e.target.value)}
             placeholder="0.00"
-            className={inputClass}
           />
-        </div>
+        </Field>
       </div>
 
       <TasaBcvField
@@ -162,53 +139,52 @@ export default function CargarForm({ state, presupuesto, carteras, onUpdateField
         onChange={(v) => onUpdateField("tasaBcv", v)}
       />
 
-      <div className="space-y-1.5">
-        <label className={labelClass}>
-          Descripción
-          <span className="ml-1 text-xs text-muted">({descLen}/240)</span>
-        </label>
-        <textarea
+      <Field
+        label={
+          <span>
+            Descripción
+            <span className="ml-1 text-xs text-muted">({descLen}/240)</span>
+          </span>
+        }
+        hint={`${descLen}/240`}
+        error={descLen >= 240 ? "Máximo 240 caracteres" : undefined}
+      >
+        <Textarea
           value={state.descripcion}
           onChange={(e) => {
             if (e.target.value.length <= 240) onUpdateField("descripcion", e.target.value);
           }}
           rows={3}
           placeholder="Notas adicionales…"
-          className={`${inputClass} resize-none`}
         />
-        <div className="flex justify-end">
-          <span className={`text-xs ${descLen >= 240 ? "text-danger" : "text-muted"}`}>
-            {descLen}/240
-          </span>
-        </div>
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <label className={labelClass}>Cartera</label>
+      <Field label="Cartera">
         <CarteraSelect
           value={state.carteraId}
           carteras={carteras}
           onChange={(id) => onUpdateField("carteraId", id)}
         />
-      </div>
+      </Field>
 
-      <div className="space-y-1.5">
-        <label className={labelClass}>Fecha</label>
-        <input
+      <Field label="Fecha">
+        <TextInput
           type="datetime-local"
           value={state.fecha}
           onChange={(e) => onUpdateField("fecha", e.target.value as ISODateTime)}
-          className={inputClass}
         />
-      </div>
+      </Field>
 
       <div className="sticky bottom-4 pt-2 pb-4">
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={onSave}
-          className="w-full rounded-xl gradient-primary px-4 py-3 text-sm font-semibold text-white shadow-lg glow-primary hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="shadow-lg glow-primary"
         >
           Guardar {isIngreso ? "ingreso" : "egreso"}
-        </button>
+        </Button>
       </div>
     </div>
   );

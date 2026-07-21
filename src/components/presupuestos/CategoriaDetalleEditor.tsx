@@ -9,8 +9,12 @@ import { convertirAMoneyValues } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import { Pencil, Trash2, X } from "lucide-react";
 import type { CategoriaId } from "@/types/transaccion";
+import Modal from "@/components/ui/Modal";
+import Button from "@/components/ui/Button";
+import { Field, TextInput } from "@/components/ui/Field";
 import ColorPicker from "./ColorPicker";
 import MoneyInput from "./MoneyInput";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface CategoriaDetalleEditorProps {
   open: boolean;
@@ -26,6 +30,8 @@ interface CategoriaDetalleEditorProps {
   onUpdateCategoria?: (id: string, data: Partial<Categoria>) => void;
   onClose: () => void;
 }
+
+const DEFAULT_COLOR = "#3B82F6" as HexColor;
 
 export default function CategoriaDetalleEditor({
   open,
@@ -43,10 +49,11 @@ export default function CategoriaDetalleEditor({
 }: CategoriaDetalleEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
   const [montoInput, setMontoInput] = useState("");
   const [moneda, setMoneda] = useState<MonedaBudget>(monedaDefault);
-  const [color, setColor] = useState<HexColor>("#3B82F6" as HexColor);
+  const [color, setColor] = useState<HexColor>(DEFAULT_COLOR);
   const [orden, setOrden] = useState("1");
 
   const { fromCartera } = useMonedaActiva();
@@ -57,9 +64,19 @@ export default function CategoriaDetalleEditor({
     setNombre(d?.nombre ?? "");
     setMontoInput(d ? String(Number(d.montoEstimado)) : "");
     setMoneda(d?.moneda ?? monedaDefault);
-    setColor(d?.color ?? ("#3B82F6" as HexColor));
+    setColor(d?.color ?? DEFAULT_COLOR);
     setOrden(d ? String(d.orden) : String(detalles.length + 1));
     setFormOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setNombre("");
+    setMontoInput("");
+    setMoneda(monedaDefault);
+    setColor(DEFAULT_COLOR);
+    setOrden(String(detalles.length + 1));
+    setFormOpen(false);
   };
 
   const calcTotalDetallesBs = (montoNuevo: number, monedaNueva: MonedaBudget, excludeId?: string): Money => {
@@ -104,13 +121,7 @@ export default function CategoriaDetalleEditor({
       });
     }
 
-    setEditingId(null);
-    setNombre("");
-    setMontoInput("");
-    setMoneda(monedaDefault);
-    setColor("#3B82F6" as HexColor);
-    setOrden(String(detalles.length + 1));
-    setFormOpen(false);
+    resetForm();
   };
 
   const montoNum = montoInput ? (parseFloat(montoInput) || 0) : 0;
@@ -118,20 +129,12 @@ export default function CategoriaDetalleEditor({
   const excedenteBs = Number(totalBs) - Number(limiteBs);
   const overLimit = montoNum > 0 && excedenteBs > 0;
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("¿Eliminar este detalle?")) {
-      onDelete(id);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={onClose}>
-      <div
-        className="w-full max-w-md rounded-t-2xl bg-white p-6 dark:bg-zinc-900 sm:rounded-2xl max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Detalles de ${categoriaNombre}`}
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        ariaLabel={`Detalles de ${categoriaNombre}`}
       >
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -170,7 +173,7 @@ export default function CategoriaDetalleEditor({
                     <Pencil className="w-4 h-4 text-zinc-500" />
                   </button>
                   <button
-                    onClick={() => handleDelete(d.id)}
+                    onClick={() => setConfirmDeleteId(d.id)}
                     className="p-1.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                     aria-label="Eliminar"
                   >
@@ -187,16 +190,14 @@ export default function CategoriaDetalleEditor({
             <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {editingId ? "Editar detalle" : "Nuevo detalle"}
             </h3>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Nombre</label>
-              <input
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-400"
+            <Field label="Nombre">
+              <TextInput
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej: Desayuno"
                 autoFocus
               />
-            </div>
+            </Field>
             <MoneyInput
               label="Monto estimado"
               value={montoInput}
@@ -207,20 +208,18 @@ export default function CategoriaDetalleEditor({
               showEquivalent={false}
               prioritizeMoneda={monedaDefault}
             />
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Color</label>
-              <ColorPicker value={color} onChange={(c) => setColor(c as HexColor)} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Orden</label>
-              <input
-                className="w-20 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:focus:border-zinc-400"
+            <Field label="Color">
+              <ColorPicker value={color} onChange={setColor} />
+            </Field>
+            <Field label="Orden">
+              <TextInput
                 type="number"
                 min={1}
                 value={orden}
                 onChange={(e) => setOrden(e.target.value)}
+                className="w-20"
               />
-            </div>
+            </Field>
 
             {overLimit && (
               <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2">
@@ -236,30 +235,16 @@ export default function CategoriaDetalleEditor({
             )}
 
             <div className="flex gap-2 pt-1">
-              <button
-                className="flex-1 rounded-lg border border-zinc-300 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                onClick={() => {
-                  setEditingId(null);
-                  setNombre("");
-                  setMontoInput("");
-                  setMoneda(monedaDefault);
-                  setColor("#3B82F6" as HexColor);
-                  setOrden(String(detalles.length + 1));
-                  setFormOpen(false);
-                }}
-              >
+              <Button variant="secondary" fullWidth onClick={resetForm}>
                 Cancelar
-              </button>
-              <button
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                  overLimit
-                    ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
-                    : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                }`}
+              </Button>
+              <Button
+                fullWidth
                 onClick={handleSave}
+                className={overLimit ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white" : ""}
               >
                 {overLimit ? "Guardar y actualizar límite" : "Guardar"}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -274,14 +259,24 @@ export default function CategoriaDetalleEditor({
         )}
 
         <div className="mt-5">
-          <button
-            className="w-full rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-            onClick={onClose}
-          >
+          <Button variant="primary" fullWidth onClick={onClose}>
             Cerrar
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        title="Eliminar detalle"
+        message="¿Eliminar este detalle? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        confirmTone="danger"
+        onConfirm={() => {
+          if (confirmDeleteId) onDelete(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
+    </>
   );
 }
