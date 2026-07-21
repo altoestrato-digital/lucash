@@ -8,6 +8,7 @@ import { useCargarForm } from "@/hooks/useCargarForm";
 import { useUploadOcr } from "@/hooks/useUploadOcr";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
 import { useCarteras } from "@/hooks/useCarteras";
+import { useDolarApiForDate } from "@/hooks/useDolarApiForDate";
 import { transaccionesRepo, tasasDolarApiRepo } from "@/lib/db";
 import { bs, usd } from "@/lib/money";
 import { convertirABs } from "@/lib/conversion";
@@ -79,6 +80,7 @@ export default function CargarPage() {
 
   const selectedCartera = carteras.find((c) => c.id === state.carteraId);
   const carterasAhorro = carteras.filter((c) => c.activo && c.objetivo === "ahorro");
+  const { fuenteActiva } = useDolarApiForDate(extractDate(state.fecha));
 
   const doSave = useCallback(() => {
     if (!state.tipo || !state.carteraId) return;
@@ -91,6 +93,7 @@ export default function CargarPage() {
     const paraleloEntry = tasasDolarApiRepo.get(extractDate(state.fecha), "paralelo");
     const tasaOficial = oficialEntry?.valor ?? tasaBcvNum;
     const tasaParalelo = paraleloEntry?.valor ?? tasaBcvNum;
+    const tasaTipo: "oficial" | "paralelo" = tasaBcvNum > 0 ? "paralelo" : fuenteActiva;
 
     const monedaCartera = selectedCartera?.moneda ?? "Bs";
     const montoFinal = monedaCartera === "Bs"
@@ -124,6 +127,7 @@ export default function CargarPage() {
       montoUsd: usd(montoUsd),
       tasaOficial,
       tasaParalelo,
+      tasaTipo,
       carteraId: state.carteraId,
       saldoPrevio: movimiento.saldoPrevio,
       saldoPosterior: movimiento.saldoPosterior,
@@ -162,7 +166,7 @@ export default function CargarPage() {
       setExcedenteBs(excedente);
       setShowExcedente(true);
     }
-  }, [state, addMovimiento, presupuesto, reset, selectedCartera, pushToast]);
+  }, [state, addMovimiento, presupuesto, reset, selectedCartera, pushToast, fuenteActiva]);
 
   const handleSave = useCallback(() => {
     if (!state.tipo || !state.carteraId) return;
@@ -215,6 +219,7 @@ export default function CargarPage() {
       montoUsd: usd(0),
       tasaOficial,
       tasaParalelo,
+      tasaTipo: "oficial",
       carteraId,
       saldoPrevio: movimiento.saldoPrevio,
       saldoPosterior: movimiento.saldoPosterior,

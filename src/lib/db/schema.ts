@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS espacio_trabajo (
@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS transaccion (
   monto_usd REAL NOT NULL DEFAULT 0,
   tasa_oficial REAL NOT NULL DEFAULT 0,
   tasa_paralelo REAL NOT NULL DEFAULT 0,
+  tasa_tipo TEXT NOT NULL DEFAULT 'oficial',
   cartera_id TEXT NOT NULL,
   saldo_previo REAL NOT NULL DEFAULT 0,
   saldo_posterior REAL NOT NULL DEFAULT 0,

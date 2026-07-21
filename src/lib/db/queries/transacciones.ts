@@ -26,6 +26,7 @@ function rowToTransaccion(row: Row): Transaccion {
     montoUsd: row.monto_usd as Transaccion["montoUsd"],
     tasaOficial: (row.tasa_oficial as number) ?? 0,
     tasaParalelo: (row.tasa_paralelo as number) ?? 0,
+    tasaTipo: (row.tasa_tipo as "oficial" | "paralelo") ?? "oficial",
     carteraId: (row.cartera_id as CarteraId) ?? ("" as CarteraId),
     saldoPrevio: (row.saldo_previo as number) ?? 0,
     saldoPosterior: (row.saldo_posterior as number) ?? 0,
@@ -60,6 +61,7 @@ export interface AddTransaccionInput {
   montoUsd: Transaccion["montoUsd"];
   tasaOficial: number;
   tasaParalelo: number;
+  tasaTipo: "oficial" | "paralelo";
   carteraId: CarteraId;
   saldoPrevio: number;
   saldoPosterior: number;
@@ -103,11 +105,11 @@ export const transaccionesRepo = {
       `INSERT INTO transaccion
        (id, tipo, fecha, emisor_receptor, concepto,
         monto_original, moneda_original, monto_bs, monto_usd,
-        tasa_oficial, tasa_paralelo,
+        tasa_oficial, tasa_paralelo, tasa_tipo,
         cartera_id, saldo_previo, saldo_posterior,
         descripcion, categoria_id, categoria_detalle_id, adjunto,
         fuente_ocr, uso_ahorro_confirmado, es_redireccion_excedente, activa, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       [
         created.id,
         created.tipo,
@@ -120,6 +122,7 @@ export const transaccionesRepo = {
         Number(created.montoUsd),
         created.tasaOficial,
         created.tasaParalelo,
+        created.tasaTipo,
         created.carteraId,
         created.saldoPrevio,
         created.saldoPosterior,

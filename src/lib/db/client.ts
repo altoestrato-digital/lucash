@@ -167,6 +167,12 @@ export async function initDB(): Promise<Database> {
     // Column already exists — safe to ignore
   }
 
+  try {
+    dbInstance.run("ALTER TABLE transaccion ADD COLUMN tasa_tipo TEXT NOT NULL DEFAULT 'oficial'");
+  } catch {
+    // Column already exists — safe to ignore
+  }
+
   await persistNow();
   return dbInstance;
 }

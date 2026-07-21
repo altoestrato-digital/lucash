@@ -26,6 +26,7 @@ export interface Transaccion {
   montoUsd: Money;
   tasaOficial: number;
   tasaParalelo: number;
+  tasaTipo: "oficial" | "paralelo";
   carteraId: CarteraId;
   saldoPrevio: number;
   saldoPosterior: number;
