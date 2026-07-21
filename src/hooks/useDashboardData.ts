@@ -70,8 +70,8 @@ export const getDashboardData = (
 
   return {
     disponible: { bs: resumenCarteras.disponibleBs, usd: resumenCarteras.disponibleUsd },
-    presupuestoCubiertoPct: cobertura
-      ? Math.min(100, (Number(cobertura.ingresoRealBs) / Number(cobertura.ingresoEsperadoBs ?? 1)) * 100)
+    presupuestoCubiertoPct: cobertura && Number(cobertura.ingresoEsperadoBs) > 0
+      ? Math.min(100, (Number(cobertura.ingresoRealBs) / Number(cobertura.ingresoEsperadoBs)) * 100)
       : 0,
     gastadoMesBs: gastosMes,
     gastosPorCat,
