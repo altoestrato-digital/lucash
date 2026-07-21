@@ -52,6 +52,7 @@ function rowToPresupuesto(row: Row, cats: Categoria[]): Presupuesto {
       (row.quincena_corte_dia as number | null) === null
         ? undefined
         : ((row.quincena_corte_dia as number) as 1 | 16),
+    persistente: Boolean(row.persistente),
     categorias: cats,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
@@ -81,6 +82,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
            ingreso_esperado = ?, ingreso_esperado_moneda = ?,
            gasto_maximo_esperado = ?, gasto_maximo_esperado_moneda = ?,
            fecha_inicio = ?, fecha_fin = ?, quincena_corte_dia = ?,
+           persistente = ?,
            espacio_trabajo_id = ?,
            cerrado = 0, cerrado_at = NULL, updated_at = ?
        WHERE id = ?`,
@@ -95,6 +97,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
         p.fechaInicio,
         p.fechaFin,
         p.quincenaCorteDia ?? null,
+        p.persistente ? 1 : 0,
         p.espacioTrabajoId ?? null,
         now,
         existingId,
@@ -115,8 +118,8 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
      (id, usuario_id, nombre, periodicidad,
       ingreso_esperado, ingreso_esperado_moneda,
       gasto_maximo_esperado, gasto_maximo_esperado_moneda,
-      fecha_inicio, fecha_fin, quincena_corte_dia, cerrado, espacio_trabajo_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      fecha_inicio, fecha_fin, quincena_corte_dia, persistente, cerrado, espacio_trabajo_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
     [
       created.id,
       created.usuarioId,
@@ -129,6 +132,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
       created.fechaInicio,
       created.fechaFin,
       created.quincenaCorteDia ?? null,
+      created.persistente ? 1 : 0,
       created.espacioTrabajoId ?? null,
       created.createdAt,
       created.updatedAt,
@@ -138,8 +142,15 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
 }
 
 export const presupuestoRepo = {
-  getActual(): Presupuesto | null {
+  getActual(espacioTrabajoId?: string | null): Presupuesto | null {
     const usuarioId = usuariosRepo.getActivo().id;
+    if (espacioTrabajoId) {
+      return queryOne(
+        "SELECT * FROM presupuesto WHERE cerrado = 0 AND usuario_id = ? AND espacio_trabajo_id = ? ORDER BY created_at DESC LIMIT 1",
+        [usuarioId, espacioTrabajoId],
+        (row) => rowToPresupuesto(row, categoriasDe(row.id as string)),
+      );
+    }
     return queryOne(
       "SELECT * FROM presupuesto WHERE cerrado = 0 AND usuario_id = ? ORDER BY created_at DESC LIMIT 1",
       [usuarioId],
@@ -147,8 +158,8 @@ export const presupuestoRepo = {
     );
   },
 
-  upsert(p: Omit<Presupuesto, "id" | "createdAt" | "updatedAt">): Presupuesto {
-    const existing = presupuestoRepo.getActual();
+  upsert(p: Omit<Presupuesto, "id" | "createdAt" | "updatedAt">, espacioTrabajoId?: string | null): Presupuesto {
+    const existing = presupuestoRepo.getActual(espacioTrabajoId ?? p.espacioTrabajoId);
     const result = upsertPresupuestoCore(p, existing?.id);
     persist();
     notifyChange();

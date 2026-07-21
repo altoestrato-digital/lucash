@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS presupuesto (
   fecha_inicio TEXT NOT NULL,
   fecha_fin TEXT NOT NULL,
   quincena_corte_dia INTEGER,
+  persistente INTEGER NOT NULL DEFAULT 0,
   cerrado INTEGER NOT NULL DEFAULT 0,
   cerrado_at TEXT,
   created_at TEXT NOT NULL,

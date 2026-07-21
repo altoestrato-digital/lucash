@@ -161,6 +161,12 @@ export async function initDB(): Promise<Database> {
     // Column already exists — safe to ignore
   }
 
+  try {
+    dbInstance.run("ALTER TABLE presupuesto ADD COLUMN persistente INTEGER NOT NULL DEFAULT 0");
+  } catch {
+    // Column already exists — safe to ignore
+  }
+
   await persistNow();
   return dbInstance;
 }

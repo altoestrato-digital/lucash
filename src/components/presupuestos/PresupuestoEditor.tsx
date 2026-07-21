@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudget } from "@/types/presupuesto";
+import type { ISODate } from "@/lib/dates";
 import { bs } from "@/lib/money";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import PeriodicidadSelect from "./PeriodicidadSelect";
 import CategoriaRow from "./CategoriaRow";
+
+const defaultRangoFechas = (): { inicio: ISODate; fin: ISODate } => {
+  const hoy = new Date();
+  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  return { inicio: toIso(hoy), fin: toIso(finMes) };
+};
 
 export default function PresupuestoEditor({
   presupuesto,
@@ -33,6 +40,9 @@ export default function PresupuestoEditor({
   const [gastoMaximoMoneda, setGastoMaximoMoneda] = useState<MonedaBudget>(presupuesto.gastoMaximoEsperadoMoneda);
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>(presupuesto.periodicidad);
   const [corteDia, setCorteDia] = useState<1 | 16>(presupuesto.quincenaCorteDia ?? 1);
+  const [fechaInicio, setFechaInicio] = useState<ISODate>(presupuesto.fechaInicio);
+  const [fechaFin, setFechaFin] = useState<ISODate>(presupuesto.fechaFin);
+  const [persistente, setPersistente] = useState(presupuesto.persistente ?? false);
   const [dirty, setDirty] = useState(false);
 
   const activos = presupuesto.categorias.filter((s) => s.activo);
@@ -49,6 +59,16 @@ export default function PresupuestoEditor({
     }
   };
 
+  const handlePeriodicidadChange = (p: Periodicidad) => {
+    setPeriodicidad(p);
+    setDirty(true);
+    if (p === "rango") {
+      const { inicio, fin } = defaultRangoFechas();
+      setFechaInicio(inicio);
+      setFechaFin(fin);
+    }
+  };
+
   const handleSave = () => {
     onSave({
       ingresoEsperado: bs(Number(ingreso)),
@@ -57,6 +77,9 @@ export default function PresupuestoEditor({
       gastoMaximoEsperadoMoneda: gastoMaximoMoneda,
       periodicidad,
       quincenaCorteDia: periodicidad === "quincenal" ? corteDia : undefined,
+      fechaInicio,
+      fechaFin,
+      persistente: periodicidad === "rango" ? persistente : undefined,
     });
     setDirty(false);
   };
@@ -67,7 +90,10 @@ export default function PresupuestoEditor({
     Number(gastoMaximo) !== Number(presupuesto.gastoMaximoEsperado) ||
     gastoMaximoMoneda !== presupuesto.gastoMaximoEsperadoMoneda ||
     periodicidad !== presupuesto.periodicidad ||
-    (periodicidad === "quincenal" && corteDia !== presupuesto.quincenaCorteDia);
+    (periodicidad === "quincenal" && corteDia !== presupuesto.quincenaCorteDia) ||
+    fechaInicio !== presupuesto.fechaInicio ||
+    fechaFin !== presupuesto.fechaFin ||
+    (periodicidad === "rango" && persistente !== (presupuesto.persistente ?? false));
 
   const inputClass = "w-full rounded-xl border border-border bg-surface-elevated px-3 py-2.5 text-sm text-foreground placeholder-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
   const selectClass = "rounded-xl border border-border bg-surface-elevated px-2 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
@@ -140,10 +166,38 @@ export default function PresupuestoEditor({
           <PeriodicidadSelect
             value={periodicidad}
             quincenaCorteDia={corteDia}
-            onChange={(p) => { setPeriodicidad(p); setDirty(true); }}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            onChange={handlePeriodicidadChange}
             onChangeCorte={(d) => { setCorteDia(d); setDirty(true); }}
+            onChangeFechaInicio={(f) => { setFechaInicio(f); setDirty(true); }}
+            onChangeFechaFin={(f) => { setFechaFin(f); setDirty(true); }}
           />
         </div>
+
+        {periodicidad === "rango" && (
+          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+            <div>
+              <label className="text-sm font-medium text-foreground">Persistente</label>
+              <p className="text-xs text-muted">Al cerrar el período, crea automáticamente el siguiente con la misma duración.</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={persistente}
+              onClick={() => { setPersistente((v) => !v); setDirty(true); }}
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                persistente ? "bg-primary" : "bg-zinc-300 dark:bg-zinc-600"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                  persistente ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        )}
 
         <button
           onClick={handleSave}

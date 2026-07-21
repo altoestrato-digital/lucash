@@ -25,6 +25,12 @@ export default function SnapshotBanner({
   const ingresoPair = fromBs(presupuesto.ingresoEsperado);
   const gastoPair = fromBs(presupuesto.gastoMaximoEsperado);
 
+  const periodoLabel = presupuesto.periodicidad === "mensual"
+    ? "el mes"
+    : presupuesto.periodicidad === "rango"
+      ? "el rango"
+      : "el periodo";
+
   return (
     <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 space-y-3" role="alert">
       <div className="flex items-start gap-3">
@@ -33,7 +39,7 @@ export default function SnapshotBanner({
         </div>
         <div>
           <p className="font-semibold text-foreground">
-            Se cerró {presupuesto.periodicidad === "mensual" ? "el mes" : "el periodo"}
+            Se cerró {periodoLabel}
           </p>
           <p className="text-sm text-muted mt-1">
             {ingresoPair.primary} ingresos · {gastoPair.primary} gastos · {balance >= 0 ? "superávit" : "déficit"} de {formatBs(presupuesto.gastoMaximoEsperado)}

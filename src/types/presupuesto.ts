@@ -4,7 +4,7 @@ import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
 import type { HexColor } from "@/types/hex-color";
 import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 
-export type Periodicidad = "diaria" | "semanal" | "quincenal" | "mensual" | "trimestral";
+export type Periodicidad = "semanal" | "quincenal" | "mensual" | "trimestral" | "rango";
 export type Prioridad = 1 | 2 | 3;
 export type EstadoCobertura = "cubierto" | "parcial" | "no-cubierto" | "excedido";
 export type MonedaBudget = "Bs" | "USD";
@@ -46,6 +46,7 @@ export interface Presupuesto {
   fechaInicio: ISODate;
   fechaFin: ISODate;
   quincenaCorteDia?: 1 | 16;
+  persistente?: boolean;
   categorias: Categoria[];
   createdAt: string;
   updatedAt: string;

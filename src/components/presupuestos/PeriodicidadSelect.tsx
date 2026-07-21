@@ -1,25 +1,34 @@
 "use client";
 
 import type { Periodicidad } from "@/types/presupuesto";
+import type { ISODate } from "@/lib/dates";
 
 const opciones: { value: Periodicidad; label: string }[] = [
-  { value: "diaria", label: "Diaria" },
   { value: "semanal", label: "Semanal" },
   { value: "quincenal", label: "Quincenal" },
   { value: "mensual", label: "Mensual" },
   { value: "trimestral", label: "Trimestral" },
+  { value: "rango", label: "Rango" },
 ];
 
 export default function PeriodicidadSelect({
   value,
   quincenaCorteDia,
+  fechaInicio,
+  fechaFin,
   onChange,
   onChangeCorte,
+  onChangeFechaInicio,
+  onChangeFechaFin,
 }: {
   value: Periodicidad;
   quincenaCorteDia?: 1 | 16;
+  fechaInicio?: ISODate;
+  fechaFin?: ISODate;
   onChange: (p: Periodicidad) => void;
   onChangeCorte: (d: 1 | 16) => void;
+  onChangeFechaInicio: (f: ISODate) => void;
+  onChangeFechaFin: (f: ISODate) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -59,6 +68,29 @@ export default function PeriodicidadSelect({
                 Día {d}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+      {value === "rango" && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Inicio</label>
+            <input
+              type="date"
+              value={fechaInicio ?? ""}
+              onChange={(e) => onChangeFechaInicio(e.target.value as ISODate)}
+              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Fin</label>
+            <input
+              type="date"
+              value={fechaFin ?? ""}
+              min={fechaInicio ?? undefined}
+              onChange={(e) => onChangeFechaFin(e.target.value as ISODate)}
+              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            />
           </div>
         </div>
       )}

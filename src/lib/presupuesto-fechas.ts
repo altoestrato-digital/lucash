@@ -10,8 +10,6 @@ export const calcularRangoPeriodo = (
   const d = new Date(desde);
 
   switch (periodicidad) {
-    case "diaria":
-      return { fechaInicio: toIso(d), fechaFin: toIso(d) };
     case "semanal": {
       const day = d.getDay();
       const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -46,5 +44,7 @@ export const calcularRangoPeriodo = (
         fechaFin: toIso(new Date(d.getFullYear(), trimestre * 3 + 3, 0)),
       };
     }
+    case "rango":
+      return { fechaInicio: toIso(d), fechaFin: toIso(d) };
   }
 };

@@ -4,6 +4,9 @@ import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { getMonthName } from "@/lib/dates";
 
 export const getRangoPorPresupuesto = (p: Presupuesto): { desde: ISODate; hasta: ISODate } => {
+  if (p.periodicidad === "rango") {
+    return { desde: p.fechaInicio, hasta: p.fechaFin };
+  }
   const r = calcularRangoPeriodo(new Date(p.fechaInicio + "T12:00:00"), p.periodicidad, p.quincenaCorteDia);
   return { desde: r.fechaInicio, hasta: r.fechaFin };
 };

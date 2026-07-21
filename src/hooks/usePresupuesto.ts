@@ -12,6 +12,7 @@ import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
 import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { bs } from "@/lib/money";
+import { toIso } from "@/lib/dates";
 import { usePreferencias } from "@/hooks/usePreferencias";
 
 export function usePresupuesto(filtrarPorEspacio = true) {
@@ -19,16 +20,16 @@ export function usePresupuesto(filtrarPorEspacio = true) {
   const espacioId = filtrarPorEspacio ? preferencias.espacioTrabajoId : null;
 
   const [presupuestoAll, setPresupuestoAll] = useState<Presupuesto | null>(() =>
-    presupuestoRepo.getActual(),
+    presupuestoRepo.getActual(espacioId),
   );
   const [snapshots, setSnapshots] = useState<PresupuestoSnapshot[]>(() => snapshotsRepo.list());
 
   useEffect(() => {
     return subscribe(() => {
-      setPresupuestoAll(presupuestoRepo.getActual());
+      setPresupuestoAll(presupuestoRepo.getActual(espacioId));
       setSnapshots(snapshotsRepo.list());
     });
-  }, []);
+  }, [espacioId]);
 
   const presupuesto = espacioId
     ? presupuestoAll && presupuestoAll.espacioTrabajoId === espacioId
@@ -38,24 +39,22 @@ export function usePresupuesto(filtrarPorEspacio = true) {
 
   const updatePresupuesto = useCallback((data: Partial<Presupuesto>) => {
     if (!isDBReady()) return;
-    const current = presupuestoRepo.getActual();
-    const currentBelongsToWorkspace = current && espacioId
-      ? current.espacioTrabajoId === espacioId
-      : true;
-    if (current && currentBelongsToWorkspace) {
+    const targetWorkspace = data.espacioTrabajoId ?? espacioId;
+    const current = presupuestoRepo.getActual(targetWorkspace);
+    if (current) {
       const merged: Omit<Presupuesto, "id" | "createdAt"> = {
         ...current,
         ...data,
         espacioTrabajoId: (data.espacioTrabajoId ?? current.espacioTrabajoId ?? (espacioId || undefined)) as EspacioTrabajoId | undefined,
         categorias: data.categorias ?? current.categorias,
       };
-      presupuestoRepo.upsert(merged);
+      presupuestoRepo.upsert(merged, targetWorkspace);
     } else {
       const withEspacio: Omit<Presupuesto, "id" | "createdAt"> = {
         ...data,
         espacioTrabajoId: data.espacioTrabajoId ?? espacioId,
       } as Omit<Presupuesto, "id" | "createdAt">;
-      presupuestoRepo.upsert(withEspacio);
+      presupuestoRepo.upsert(withEspacio, targetWorkspace);
     }
   }, [espacioId]);
 
@@ -88,7 +87,7 @@ export function usePresupuesto(filtrarPorEspacio = true) {
   }, []);
 
   const cerrarPeriodo = useCallback(() => {
-    const current = presupuestoRepo.getActual();
+    const current = presupuestoRepo.getActual(espacioId);
     if (!current) return;
 
     const now = new Date().toISOString();
@@ -109,11 +108,26 @@ export function usePresupuesto(filtrarPorEspacio = true) {
       createdAt: now,
       updatedAt: now,
     };
-    const siguienteRango = calcularRangoPeriodo(
-      new Date(current.fechaFin + "T12:00:00"),
-      current.periodicidad,
-      current.quincenaCorteDia,
-    );
+
+    let siguienteFechaInicio = current.fechaInicio;
+    let siguienteFechaFin = current.fechaFin;
+
+    if (current.periodicidad === "rango" && current.persistente) {
+      const duracionMs = new Date(current.fechaFin + "T12:00:00").getTime() - new Date(current.fechaInicio + "T12:00:00").getTime();
+      const nuevoInicio = new Date(current.fechaFin + "T12:00:00");
+      nuevoInicio.setDate(nuevoInicio.getDate() + 1);
+      const nuevoFin = new Date(nuevoInicio.getTime() + duracionMs);
+      siguienteFechaInicio = toIso(nuevoInicio);
+      siguienteFechaFin = toIso(nuevoFin);
+    } else if (current.periodicidad !== "rango") {
+      const sig = calcularRangoPeriodo(
+        new Date(current.fechaFin + "T12:00:00"),
+        current.periodicidad,
+        current.quincenaCorteDia,
+      );
+      siguienteFechaInicio = sig.fechaInicio;
+      siguienteFechaFin = sig.fechaFin;
+    }
 
     presupuestoRepo.cerrarPeriodoConSnapshot(
       current.id,
@@ -128,13 +142,14 @@ export function usePresupuesto(filtrarPorEspacio = true) {
         ingresoEsperadoMoneda: current.ingresoEsperadoMoneda,
         gastoMaximoEsperado: current.gastoMaximoEsperado,
         gastoMaximoEsperadoMoneda: current.gastoMaximoEsperadoMoneda,
-        fechaInicio: siguienteRango.fechaInicio,
-        fechaFin: siguienteRango.fechaFin,
+        fechaInicio: siguienteFechaInicio,
+        fechaFin: siguienteFechaFin,
         quincenaCorteDia: current.quincenaCorteDia,
+        persistente: current.persistente,
         categorias: current.categorias.filter((s) => s.recurrente).map((s) => ({ ...s })),
       },
     );
-  }, []);
+  }, [espacioId]);
 
   return {
     presupuesto,
