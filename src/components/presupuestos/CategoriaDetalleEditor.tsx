@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { CategoriaDetalle } from "@/types/presupuesto";
-import type { MonedaBudget } from "@/types/presupuesto";
+import type { CategoriaDetalle, Categoria, MonedaBudget } from "@/types/presupuesto";
 import type { HexColor } from "@/types/hex-color";
-import { bs, usd } from "@/lib/money";
+import { bs, usd, type Money } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
+import { convertirABs } from "@/lib/conversion";
+import { toIso } from "@/lib/dates";
 import type { CategoriaId } from "@/types/transaccion";
 import ColorPicker from "./ColorPicker";
 
@@ -13,10 +14,12 @@ interface CategoriaDetalleEditorProps {
   open: boolean;
   categoriaId: string;
   categoriaNombre: string;
+  categoriaLimite: Money;
   detalles: CategoriaDetalle[];
   onAdd: (data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => void;
   onUpdate: (id: string, data: Partial<CategoriaDetalle>) => void;
   onDelete: (id: string) => void;
+  onUpdateCategoria?: (id: string, data: Partial<Categoria>) => void;
   onClose: () => void;
 }
 
@@ -24,10 +27,12 @@ export default function CategoriaDetalleEditor({
   open,
   categoriaId,
   categoriaNombre,
+  categoriaLimite,
   detalles,
   onAdd,
   onUpdate,
   onDelete,
+  onUpdateCategoria,
   onClose,
 }: CategoriaDetalleEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,6 +44,7 @@ export default function CategoriaDetalleEditor({
   const [orden, setOrden] = useState("1");
 
   const { fromCartera } = useMonedaActiva();
+  const hoy = toIso(new Date());
 
   const resetForm = () => {
     setEditingId(null);
@@ -48,6 +54,18 @@ export default function CategoriaDetalleEditor({
     setColor("#3B82F6");
     setOrden(String(detalles.length + 1));
   };
+
+  const calcTotalDetallesBs = (montoNuevo: number, monedaNueva: MonedaBudget, excludeId?: string): Money => {
+    let total = 0;
+    for (const d of detalles) {
+      if (excludeId && d.id === excludeId) continue;
+      total += Number(convertirABs(d.montoEstimado, hoy));
+    }
+    total += Number(convertirABs(monedaNueva === "USD" ? usd(montoNuevo) : bs(montoNuevo), hoy));
+    return total as Money;
+  };
+
+  const limiteBs = convertirABs(categoriaLimite, hoy);
 
   if (!open) return null;
 
@@ -73,14 +91,30 @@ export default function CategoriaDetalleEditor({
       color: color as HexColor,
     };
 
+    const totalBsSave = calcTotalDetallesBs(montoNum, moneda, editingId ?? undefined);
+    const excedente = Number(totalBsSave) - Number(limiteBs);
+
     if (editingId) {
       onUpdate(editingId, data);
     } else {
       onAdd(data);
     }
+
+    if (excedente > 0 && onUpdateCategoria) {
+      onUpdateCategoria(categoriaId, {
+        limite: totalBsSave,
+        limiteMoneda: "Bs",
+      });
+    }
+
     resetForm();
     setFormOpen(false);
   };
+
+  const montoNum = montoInput ? (parseFloat(montoInput) || 0) : 0;
+  const totalBs = montoNum > 0 ? calcTotalDetallesBs(montoNum, moneda, editingId ?? undefined) : (0 as Money);
+  const excedenteBs = Number(totalBs) - Number(limiteBs);
+  const overLimit = montoNum > 0 && excedenteBs > 0;
 
   const handleDelete = (id: string) => {
     if (window.confirm("¿Eliminar este detalle?")) {
@@ -204,6 +238,20 @@ export default function CategoriaDetalleEditor({
                 onChange={(e) => setOrden(e.target.value)}
               />
             </div>
+
+            {overLimit && (
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2">
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Total de detalles: <span className="font-mono font-semibold">{fromCartera(totalBs, "Bs").primary}</span>.
+                  Excede el límite de la categoría (<span className="font-mono">{fromCartera(limiteBs, "Bs").primary}</span>) por{" "}
+                  <span className="font-mono font-semibold">{fromCartera(bs(excedenteBs), "Bs").primary}</span>.
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  Al guardar, el límite se actualizará automáticamente.
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-1">
               <button
                 className="flex-1 rounded-lg border border-zinc-300 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -212,10 +260,14 @@ export default function CategoriaDetalleEditor({
                 Cancelar
               </button>
               <button
-                className="flex-1 rounded-lg bg-zinc-900 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                  overLimit
+                    ? "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                    : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                }`}
                 onClick={handleSave}
               >
-                Guardar
+                {overLimit ? "Guardar y actualizar límite" : "Guardar"}
               </button>
             </div>
           </div>

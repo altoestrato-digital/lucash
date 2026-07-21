@@ -214,10 +214,12 @@ export default function PresupuestosPage() {
         open={detalleModalOpen}
         categoriaId={detalleCategoria?.id ?? ""}
         categoriaNombre={detalleCategoria?.nombre ?? ""}
+        categoriaLimite={detalleCategoria?.limite ?? bs(0)}
         detalles={detallesList}
         onAdd={handleAddDetalle}
         onUpdate={handleUpdateDetalle}
         onDelete={handleDeleteDetalle}
+        onUpdateCategoria={(id, data) => updateCategoria(id, data)}
         onClose={() => { setDetalleModalOpen(false); setDetalleCategoria(undefined); }}
       />
       </div>
