@@ -207,6 +207,7 @@ export default function PresupuestosPage() {
         presupuestoCats={presupuesto?.categorias ?? []}
         gastoMaximoEsperado={Number(presupuesto?.gastoMaximoEsperado ?? 0)}
         gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
+        monedaDefault={preferencias.moneda}
         onSave={handleSaveCat}
         onUpdatePresupuesto={(data) => updatePresupuesto({ ...data, gastoMaximoEsperado: bs(data.gastoMaximoEsperado) })}
         onClose={() => { setModalOpen(false); setEditingCat(undefined); }}
@@ -218,6 +219,7 @@ export default function PresupuestosPage() {
         categoriaNombre={detalleCategoria?.nombre ?? ""}
         categoriaLimite={detalleCategoria?.limite ?? bs(0)}
         categoriaLimiteMoneda={detalleCategoria?.limiteMoneda ?? "Bs"}
+        monedaDefault={preferencias.moneda}
         detalles={detallesList}
         onAdd={handleAddDetalle}
         onUpdate={handleUpdateDetalle}

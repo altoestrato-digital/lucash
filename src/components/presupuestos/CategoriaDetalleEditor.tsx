@@ -18,6 +18,7 @@ interface CategoriaDetalleEditorProps {
   categoriaNombre: string;
   categoriaLimite: Money;
   categoriaLimiteMoneda: MonedaBudget;
+  monedaDefault: MonedaBudget;
   detalles: CategoriaDetalle[];
   onAdd: (data: Omit<CategoriaDetalle, "id" | "activo"> & { categoriaId: string }) => void;
   onUpdate: (id: string, data: Partial<CategoriaDetalle>) => void;
@@ -32,6 +33,7 @@ export default function CategoriaDetalleEditor({
   categoriaNombre,
   categoriaLimite,
   categoriaLimiteMoneda,
+  monedaDefault,
   detalles,
   onAdd,
   onUpdate,
@@ -43,7 +45,7 @@ export default function CategoriaDetalleEditor({
   const [formOpen, setFormOpen] = useState(false);
   const [nombre, setNombre] = useState("");
   const [montoInput, setMontoInput] = useState("");
-  const [moneda, setMoneda] = useState<MonedaBudget>("Bs");
+  const [moneda, setMoneda] = useState<MonedaBudget>(monedaDefault);
   const [color, setColor] = useState<HexColor>("#3B82F6" as HexColor);
   const [orden, setOrden] = useState("1");
 
@@ -54,7 +56,7 @@ export default function CategoriaDetalleEditor({
     setEditingId(d?.id ?? null);
     setNombre(d?.nombre ?? "");
     setMontoInput(d ? String(Number(d.montoEstimado)) : "");
-    setMoneda(d?.moneda ?? "Bs");
+    setMoneda(d?.moneda ?? monedaDefault);
     setColor(d?.color ?? ("#3B82F6" as HexColor));
     setOrden(d ? String(d.orden) : String(detalles.length + 1));
     setFormOpen(true);
@@ -105,7 +107,7 @@ export default function CategoriaDetalleEditor({
     setEditingId(null);
     setNombre("");
     setMontoInput("");
-    setMoneda("Bs");
+    setMoneda(monedaDefault);
     setColor("#3B82F6" as HexColor);
     setOrden(String(detalles.length + 1));
     setFormOpen(false);
@@ -203,6 +205,7 @@ export default function CategoriaDetalleEditor({
               onMonedaChange={setMoneda}
               size="sm"
               showEquivalent={false}
+              prioritizeMoneda={monedaDefault}
             />
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Color</label>
@@ -239,7 +242,7 @@ export default function CategoriaDetalleEditor({
                   setEditingId(null);
                   setNombre("");
                   setMontoInput("");
-                  setMoneda("Bs");
+                  setMoneda(monedaDefault);
                   setColor("#3B82F6" as HexColor);
                   setOrden(String(detalles.length + 1));
                   setFormOpen(false);

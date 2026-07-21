@@ -19,6 +19,7 @@ type CategoriaEditorFormProps = {
   presupuestoCats: Categoria[];
   gastoMaximoEsperado: number;
   gastoMaximoEsperadoMoneda: MonedaBudget;
+  monedaDefault: MonedaBudget;
   onSave: (data: CategoriaDraft) => void;
   onUpdatePresupuesto?: (data: { gastoMaximoEsperado: number; gastoMaximoEsperadoMoneda: MonedaBudget }) => void;
   onClose: () => void;
@@ -30,6 +31,7 @@ export default function CategoriaEditor({
   presupuestoCats,
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
+  monedaDefault,
   onSave,
   onUpdatePresupuesto,
   onClose,
@@ -41,6 +43,7 @@ export default function CategoriaEditor({
       presupuestoCats={presupuestoCats}
       gastoMaximoEsperado={gastoMaximoEsperado}
       gastoMaximoEsperadoMoneda={gastoMaximoEsperadoMoneda}
+      monedaDefault={monedaDefault}
       onSave={onSave}
       onUpdatePresupuesto={onUpdatePresupuesto}
       onClose={onClose}
@@ -53,6 +56,7 @@ function CategoriaEditorForm({
   presupuestoCats,
   gastoMaximoEsperado,
   gastoMaximoEsperadoMoneda,
+  monedaDefault,
   onSave,
   onUpdatePresupuesto,
   onClose,
@@ -60,7 +64,7 @@ function CategoriaEditorForm({
   const [nombre, setNombre] = useState(cat?.nombre ?? "");
   const [color, setColor] = useState(cat?.color ?? "#3B82F6");
   const [limite, setLimite] = useState(cat ? String(Number(cat.limite)) : "");
-  const [limiteMoneda, setLimiteMoneda] = useState<MonedaBudget>(cat?.limiteMoneda ?? "Bs");
+  const [limiteMoneda, setLimiteMoneda] = useState<MonedaBudget>(cat?.limiteMoneda ?? monedaDefault);
   const [prioridad, setPrioridad] = useState<1 | 2 | 3>(cat?.prioridad ?? 2);
   const [recurrente, setRecurrente] = useState(cat?.recurrente ?? true);
 
@@ -162,6 +166,7 @@ function CategoriaEditorForm({
             moneda={limiteMoneda}
             onMonedaChange={setLimiteMoneda}
             showEquivalent={false}
+            prioritizeMoneda={monedaDefault}
           />
 
           {excedeMaximo && (
