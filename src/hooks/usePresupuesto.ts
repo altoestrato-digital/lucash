@@ -9,6 +9,7 @@ import type {
 } from "@/types/presupuesto";
 import { presupuestoRepo, snapshotsRepo, categoriasRepo, categoriaDetallesRepo, subscribe, isDBReady } from "@/lib/db";
 import type { CategoriaId, CategoriaDetalleId } from "@/types/transaccion";
+import type { EspacioTrabajoId } from "@/types/espacio-trabajo";
 import { calcularRangoPeriodo } from "@/lib/presupuesto-fechas";
 import { bs } from "@/lib/money";
 import { usePreferencias } from "@/hooks/usePreferencias";
@@ -42,6 +43,7 @@ export function usePresupuesto(filtrarPorEspacio = true) {
       const merged: Omit<Presupuesto, "id" | "createdAt"> = {
         ...current,
         ...data,
+        espacioTrabajoId: (data.espacioTrabajoId ?? current.espacioTrabajoId ?? (espacioId || undefined)) as EspacioTrabajoId | undefined,
         categorias: data.categorias ?? current.categorias,
       };
       presupuestoRepo.upsert(merged);
