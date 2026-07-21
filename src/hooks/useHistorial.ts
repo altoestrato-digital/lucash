@@ -7,6 +7,7 @@ import type { Money } from "@/lib/money";
 import { transaccionesRepo, carterasRepo, subscribe } from "@/lib/db";
 import { sum, sub, bs, usd } from "@/lib/money";
 import type { Presupuesto } from "@/types/presupuesto";
+import { getRangoPorPresupuesto } from "@/lib/periodo";
 import { usePreferencias } from "@/hooks/usePreferencias";
 
 const FILTROS_KEY = "lucash:filtros-historial";
@@ -38,13 +39,8 @@ function getPeriodoRange(
     return { desde: periodo.desde, hasta: periodo.hasta };
   }
   if (periodo.tipo === "presupuesto" && presupuesto) {
-    const inicioMes = new Date(presupuesto.fechaInicio);
-    inicioMes.setDate(1);
-    const finMes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + 1, 0);
-    return {
-      desde: inicioMes.toISOString().slice(0, 10),
-      hasta: finMes.toISOString().slice(0, 10),
-    };
+    const r = getRangoPorPresupuesto(presupuesto);
+    return { desde: r.desde, hasta: r.hasta };
   }
   return null;
 }
