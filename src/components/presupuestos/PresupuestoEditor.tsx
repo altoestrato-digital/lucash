@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Presupuesto, Categoria, Periodicidad, MonedaBudget } from "@/types/presupuesto";
+import type { Presupuesto, Categoria, CategoriaDetalle, Periodicidad, MonedaBudget } from "@/types/presupuesto";
 import { bs } from "@/lib/money";
 import { convertirAUSD, convertirABs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
@@ -15,6 +15,7 @@ export default function PresupuestoEditor({
   onEditCat,
   onDeleteCat,
   onDetallesCat,
+  detallesMap,
 }: {
   presupuesto: Presupuesto;
   onSave: (data: Partial<Presupuesto>) => void;
@@ -22,6 +23,7 @@ export default function PresupuestoEditor({
   onEditCat: (cat: Categoria) => void;
   onDeleteCat: (id: string) => void;
   onDetallesCat: (cat: Categoria) => void;
+  detallesMap?: Record<string, CategoriaDetalle[]>;
 }) {
   const hoy = toIso(new Date());
 
@@ -172,6 +174,7 @@ export default function PresupuestoEditor({
             <CategoriaRow
               key={cat.id}
               cat={cat}
+              detalles={detallesMap?.[cat.id]}
               onEdit={() => onEditCat(cat)}
               onDelete={() => onDeleteCat(cat.id)}
               onDetalles={() => onDetallesCat(cat)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { usePresupuesto } from "@/hooks/usePresupuesto";
 import { useCobertura } from "@/hooks/useCobertura";
 import { usePeriodoCerrado } from "@/hooks/usePeriodoCerrado";
@@ -55,6 +55,15 @@ export default function PresupuestosPage() {
 
   const cobertura = useCobertura(presupuesto, transacciones, disponibleFinal);
   const periodoCerrado = usePeriodoCerrado(presupuesto);
+
+  const detallesMap = useMemo(() => {
+    if (!presupuesto) return {};
+    const map: Record<string, CategoriaDetalle[]> = {};
+    for (const cat of presupuesto.categorias) {
+      map[cat.id] = listCategoriaDetalles(cat.id);
+    }
+    return map;
+  }, [presupuesto, listCategoriaDetalles]);
 
   const handleSave = useCallback((data: Partial<typeof presupuesto>) => {
     if (data) updatePresupuesto(data);
@@ -175,6 +184,7 @@ export default function PresupuestosPage() {
             presupuesto={presupuesto}
             fuenteDisponible={preferencias.coberturaModo}
             onFuenteChange={setCoberturaModo}
+            detallesMap={detallesMap}
           />
         )}
 
@@ -186,6 +196,7 @@ export default function PresupuestosPage() {
             onEditCat={handleEditCat}
             onDeleteCat={handleDeleteCat}
             onDetallesCat={handleOpenDetalles}
+            detallesMap={detallesMap}
           />
         )}
 

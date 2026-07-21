@@ -1,6 +1,6 @@
 "use client";
 
-import type { ResumenCobertura, Presupuesto } from "@/types/presupuesto";
+import type { ResumenCobertura, Presupuesto, CategoriaDetalle } from "@/types/presupuesto";
 import PresupuestoDona from "./PresupuestoDona";
 import CoberturaBanner from "./CoberturaBanner";
 import CategoriaCard from "./CategoriaCard";
@@ -11,6 +11,7 @@ interface Props {
   presupuesto: Presupuesto;
   fuenteDisponible: "carteras-cubrir" | "ingreso-esperado";
   onFuenteChange: (fuente: "carteras-cubrir" | "ingreso-esperado") => void;
+  detallesMap?: Record<string, CategoriaDetalle[]>;
 }
 
 export default function PresupuestoResumen({
@@ -18,6 +19,7 @@ export default function PresupuestoResumen({
   presupuesto,
   fuenteDisponible,
   onFuenteChange,
+  detallesMap,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -63,7 +65,7 @@ export default function PresupuestoResumen({
           </h2>
           <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {cobertura.porCat.map((cat) => (
-              <CategoriaCard key={cat.categoriaId} cat={cat} />
+              <CategoriaCard key={cat.categoriaId} cat={cat} detalles={cat.categoriaId !== "otros" ? detallesMap?.[cat.categoriaId] : undefined} />
             ))}
           </div>
         </div>
