@@ -46,9 +46,13 @@ export function usePresupuesto(filtrarPorEspacio = true) {
       };
       presupuestoRepo.upsert(merged);
     } else {
-      presupuestoRepo.upsert(data as Omit<Presupuesto, "id" | "createdAt">);
+      const withEspacio: Omit<Presupuesto, "id" | "createdAt"> = {
+        ...data,
+        espacioTrabajoId: data.espacioTrabajoId ?? espacioId,
+      } as Omit<Presupuesto, "id" | "createdAt">;
+      presupuestoRepo.upsert(withEspacio);
     }
-  }, []);
+  }, [espacioId]);
 
   const addCategoria = useCallback((cat: Omit<Categoria, "id" | "activo"> & { presupuestoId: string }) => {
     categoriasRepo.add(cat);
@@ -112,6 +116,7 @@ export function usePresupuesto(filtrarPorEspacio = true) {
       snapshot,
       {
         usuarioId: current.usuarioId,
+        espacioTrabajoId: current.espacioTrabajoId,
         nombre: current.nombre,
         periodicidad: current.periodicidad,
         ingresoEsperado: current.ingresoEsperado,

@@ -81,6 +81,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
            ingreso_esperado = ?, ingreso_esperado_moneda = ?,
            gasto_maximo_esperado = ?, gasto_maximo_esperado_moneda = ?,
            fecha_inicio = ?, fecha_fin = ?, quincena_corte_dia = ?,
+           espacio_trabajo_id = ?,
            cerrado = 0, cerrado_at = NULL, updated_at = ?
        WHERE id = ?`,
       [
@@ -94,6 +95,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
         p.fechaInicio,
         p.fechaFin,
         p.quincenaCorteDia ?? null,
+        p.espacioTrabajoId ?? null,
         now,
         existingId,
       ],
@@ -113,8 +115,8 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
      (id, usuario_id, nombre, periodicidad,
       ingreso_esperado, ingreso_esperado_moneda,
       gasto_maximo_esperado, gasto_maximo_esperado_moneda,
-      fecha_inicio, fecha_fin, quincena_corte_dia, cerrado, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+      fecha_inicio, fecha_fin, quincena_corte_dia, cerrado, espacio_trabajo_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
     [
       created.id,
       created.usuarioId,
@@ -127,6 +129,7 @@ function upsertPresupuestoCore(p: Omit<Presupuesto, "id" | "createdAt" | "update
       created.fechaInicio,
       created.fechaFin,
       created.quincenaCorteDia ?? null,
+      created.espacioTrabajoId ?? null,
       created.createdAt,
       created.updatedAt,
     ],
