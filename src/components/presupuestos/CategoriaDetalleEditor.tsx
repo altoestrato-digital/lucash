@@ -61,6 +61,7 @@ export default function CategoriaDetalleEditor({
   const [pendingSave, setPendingSave] = useState<{
     totalBs: Money;
     nuevoLimiteCategoriaBs: Money;
+    excedenteBs: number;
     excedenteMaximoBs: Money;
   } | null>(null);
   const [nombre, setNombre] = useState("");
@@ -159,6 +160,7 @@ export default function CategoriaDetalleEditor({
       setPendingSave({
         totalBs: totalBsSave,
         nuevoLimiteCategoriaBs: totalBsSave,
+        excedenteBs: excedente,
         excedenteMaximoBs: bs(excedenteMaximo),
       });
       return;
@@ -180,7 +182,7 @@ export default function CategoriaDetalleEditor({
       color,
     };
     const excedenteMaximo = Number(pendingSave.excedenteMaximoBs);
-    applyUpdates(data, pendingSave.totalBs, 0, excedenteMaximo);
+    applyUpdates(data, pendingSave.totalBs, pendingSave.excedenteBs, excedenteMaximo);
     setPendingSave(null);
     resetForm();
   };
