@@ -108,13 +108,27 @@ export function useHistorial(presupuesto: Presupuesto | null) {
     let ingresosUsd: Money = usd(0);
     let egresosUsd: Money = usd(0);
 
+    // Get all carteras for currency lookup
+    const allCarteras = carterasRepo.list();
+    const carterasMap = new Map(allCarteras.map(c => [c.id, c]));
+
     for (const tx of filtradas) {
+      const cartera = carterasMap.get(tx.carteraId);
+      const esBs = cartera?.moneda === "Bs";
+      const esUsd = cartera?.moneda === "USD" || cartera?.moneda === "USDT";
+
       if (tx.tipo === "ingreso") {
-        ingresosBs = sum(ingresosBs, tx.montoBs);
-        ingresosUsd = sum(ingresosUsd, tx.montoUsd);
+        if (esBs) {
+          ingresosBs = sum(ingresosBs, bs(tx.montoOriginal));
+        } else if (esUsd) {
+          ingresosUsd = sum(ingresosUsd, usd(tx.montoOriginal));
+        }
       } else {
-        egresosBs = sum(egresosBs, tx.montoBs);
-        egresosUsd = sum(egresosUsd, tx.montoUsd);
+        if (esBs) {
+          egresosBs = sum(egresosBs, bs(tx.montoOriginal));
+        } else if (esUsd) {
+          egresosUsd = sum(egresosUsd, usd(tx.montoOriginal));
+        }
       }
     }
 
