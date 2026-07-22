@@ -39,9 +39,9 @@ export const calcularCobertura = (
   let catCubiertas = 0;
 
   for (const s of activos) {
-    const gastadoBs = txs
-      .filter((t) => t.tipo === "egreso" && t.categoriaId === s.id)
-      .reduce((acc, t) => sum(acc, t.montoBs), bs(0));
+    const egresosCat = txs.filter((t) => t.tipo === "egreso" && t.categoriaId === s.id);
+    const gastadoBs = egresosCat.reduce((acc, t) => sum(acc, t.montoBs), bs(0));
+    const gastadoUsd = egresosCat.reduce((acc, t) => sum(acc, t.montoUsd), usd(0));
 
     const limiteBsValue = toBs(Number(s.limite), s.limiteMoneda, hoy);
 
@@ -70,6 +70,7 @@ export const calcularCobertura = (
       limiteOriginal: s.limite,
       limiteMoneda: s.limiteMoneda,
       gastadoBs,
+      gastadoUsd,
       estado,
       faltanBs,
       excedidoBs,
@@ -91,11 +92,13 @@ export const calcularCobertura = (
   if (excedidoMaximo) {
     estadoGlobal = "sobregiro";
     const exceso = bs(totalLimitesBs - gastoMaximoBs);
+    const excesoUsd = usd(Number(exceso) / 36);
     alertas.push({
       id: nextId(),
       tipo: "excedido",
       prioridad: null,
       montoBs: exceso,
+      montoUsd: excesoUsd,
       monedaDefault: p.gastoMaximoEsperadoMoneda,
       categoriaNombres: [],
     });
@@ -106,6 +109,7 @@ export const calcularCobertura = (
       tipo: "sobregiro",
       prioridad: null,
       montoBs: bs(Math.abs(Number(disponibleBs))),
+      montoUsd: usd(Math.abs(Number(balanceUsd))),
       monedaDefault: "Bs",
       categoriaNombres: [],
     });
@@ -132,8 +136,14 @@ export const calcularCobertura = (
       const excedidoTotal = excedidos.length > 0
         ? excedidos.reduce((acc, pc) => sum(acc, pc.excedidoBs), bs(0))
         : undefined;
+      const excedidoTotalUsd = excedidos.length > 0
+        ? excedidos.reduce((acc, pc) => sum(acc, pc.gastadoUsd), usd(0))
+        : undefined;
       const faltanTotal = faltantes.length > 0
         ? faltantes.reduce((acc, pc) => sum(acc, pc.faltanBs), bs(0))
+        : undefined;
+      const faltanTotalUsd = faltantes.length > 0
+        ? faltantes.reduce((acc, pc) => sum(acc, usd(Number(pc.faltanBs) / 36)), usd(0))
         : undefined;
       const categoriaNombres = cats.map((pc) => pc.nombre);
       return {
@@ -141,9 +151,12 @@ export const calcularCobertura = (
         tipo,
         prioridad,
         montoBs: excedidoTotal ?? faltanTotal ?? bs(0),
+        montoUsd: excedidoTotalUsd ?? faltanTotalUsd ?? usd(0),
         monedaDefault: "Bs",
         excedidoBs: excedidoTotal,
+        excedidoUsd: excedidoTotalUsd,
         faltanBs: faltanTotal,
+        faltanUsd: faltanTotalUsd,
         categoriaNombres,
       };
     };
@@ -173,11 +186,13 @@ export const calcularCobertura = (
       } else {
         estadoGlobal = "todo-cubierto";
         const sobrante = bs(Math.max(0, Number(disponibleBs) - totalLimitesBs));
+        const sobranteUsd = usd(Math.max(0, Number(balanceUsd)));
         alertas.push({
           id: nextId(),
           tipo: "todo-cubierto",
           prioridad: null,
           montoBs: sobrante,
+          montoUsd: sobranteUsd,
           monedaDefault: "Bs",
           categoriaNombres: [],
         });

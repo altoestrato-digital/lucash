@@ -35,9 +35,16 @@ export const getDashboardData = (
   });
 
   const egresosDelMes = txsDelMes.filter((t) => t.tipo === "egreso");
+  const ingresosDelMes = txsDelMes.filter((t) => t.tipo === "ingreso");
 
   const gastosMesBs = egresosDelMes.reduce((a, t) => sum(a, t.montoBs), bs(0));
   const gastosMesUsd = egresosDelMes.reduce((a, t) => sum(a, t.montoUsd), usd(0));
+
+  const ingresoMesBs = ingresosDelMes.reduce((a, t) => sum(a, t.montoBs), bs(0));
+  const ingresoMesUsd = ingresosDelMes.reduce((a, t) => sum(a, t.montoUsd), usd(0));
+
+  const balanceMesBs = bs(Number(ingresoMesBs) - Number(gastosMesBs));
+  const balanceMesUsd = usd(Number(ingresoMesUsd) - Number(gastosMesUsd));
 
   const cobertura = presupuesto
     ? calcularCobertura(presupuesto, txsDelMes, resumenCarteras.disponibleBs)
@@ -75,8 +82,12 @@ export const getDashboardData = (
     presupuestoCubiertoPct: cobertura && Number(cobertura.ingresoEsperadoBs) > 0
       ? Math.min(100, (Number(cobertura.ingresoRealBs) / Number(cobertura.ingresoEsperadoBs)) * 100)
       : 0,
+    ingresoMesBs,
+    ingresoMesUsd,
     gastadoMesBs: gastosMesBs,
     gastadoMesUsd: gastosMesUsd,
+    balanceMesBs,
+    balanceMesUsd,
     gastosPorCat,
     ultimasTransacciones,
   };

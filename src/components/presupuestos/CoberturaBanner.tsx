@@ -1,10 +1,8 @@
 "use client";
 
-import type { AlertaCobertura, ResumenCobertura, MonedaBudget } from "@/types/presupuesto";
+import type { AlertaCobertura, ResumenCobertura } from "@/types/presupuesto";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
-import { formatBs, formatUsd, type Money } from "@/lib/money";
-import { convertirAUSD } from "@/lib/conversion";
-import { toIso } from "@/lib/dates";
+import { usd, type Money } from "@/lib/money";
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 const alertStyles: Record<AlertaCobertura["tipo"], { bg: string; border: string; text: string; icon: React.ElementType; role: "alert" | "status" }> = {
@@ -52,36 +50,33 @@ const alertStyles: Record<AlertaCobertura["tipo"], { bg: string; border: string;
   },
 };
 
-const formatMonto = (monto: Money, monedaDefault: MonedaBudget, monedaPreferida: "Bs" | "USD"): string => {
-  if (monedaPreferida === "Bs") {
-    return formatBs(monto);
-  }
-  if (monedaDefault === "USD") {
-    return formatUsd(monto);
-  }
-  const usdEq = convertirAUSD(Number(monto), "Bs", toIso(new Date()));
-  return formatUsd(usdEq);
-};
-
-const buildMensaje = (alerta: AlertaCobertura, monedaPreferida: "Bs" | "USD"): string => {
+const buildMensaje = (alerta: AlertaCobertura, formatPair: (bs: Money, usd: Money) => { primary: string; secondary: string }): string => {
   const nombres = alerta.categoriaNombres.join(", ");
 
   switch (alerta.tipo) {
-    case "excedido":
-      return `Las categorías exceden el gasto máximo esperado por ${formatMonto(alerta.montoBs, alerta.monedaDefault, monedaPreferida)}.`;
-    case "sobregiro":
-      return `Estás gastando más de lo que tienes. Te pasaste por ${formatMonto(alerta.montoBs, alerta.monedaDefault, monedaPreferida)}.`;
-    case "todo-cubierto":
-      return `Presupuesto cubierto. Sobran ${formatMonto(alerta.montoBs, alerta.monedaDefault, monedaPreferida)}.`;
+    case "excedido": {
+      const pair = formatPair(alerta.montoBs, alerta.montoUsd);
+      return `Las categorías exceden el gasto máximo esperado por ${pair.primary}.`;
+    }
+    case "sobregiro": {
+      const pair = formatPair(alerta.montoBs, alerta.montoUsd);
+      return `Estás gastando más de lo que tienes. Te pasaste por ${pair.primary}.`;
+    }
+    case "todo-cubierto": {
+      const pair = formatPair(alerta.montoBs, alerta.montoUsd);
+      return `Presupuesto cubierto. Sobran ${pair.primary}.`;
+    }
     case "basico":
     case "p2":
     case "p3": {
       const partes: string[] = [];
       if (alerta.excedidoBs && Number(alerta.excedidoBs) > 0) {
-        partes.push(`Te excediste por ${formatMonto(alerta.excedidoBs, "Bs", monedaPreferida)} en ${nombres}`);
+        const pair = formatPair(alerta.excedidoBs, alerta.excedidoUsd ?? usd(0));
+        partes.push(`Te excediste por ${pair.primary} en ${nombres}`);
       }
       if (alerta.faltanBs && Number(alerta.faltanBs) > 0) {
-        partes.push(`Te faltan ${formatMonto(alerta.faltanBs, "Bs", monedaPreferida)} para cubrir ${nombres}`);
+        const pair = formatPair(alerta.faltanBs, alerta.faltanUsd ?? usd(0));
+        partes.push(`Te faltan ${pair.primary} para cubrir ${nombres}`);
       }
       return partes.join(". ") + ".";
     }
@@ -89,7 +84,7 @@ const buildMensaje = (alerta: AlertaCobertura, monedaPreferida: "Bs" | "USD"): s
 };
 
 export default function CoberturaBanner({ cobertura }: { cobertura: ResumenCobertura }) {
-  const { moneda } = useMonedaActiva();
+  const { formatPair } = useMonedaActiva();
 
   if (!cobertura.alertas.length) return null;
 
@@ -98,7 +93,7 @@ export default function CoberturaBanner({ cobertura }: { cobertura: ResumenCober
       {cobertura.alertas.map((alerta) => {
         const s = alertStyles[alerta.tipo];
         const Icon = s.icon;
-        const mensaje = buildMensaje(alerta, moneda);
+        const mensaje = buildMensaje(alerta, formatPair);
 
         return (
           <div key={alerta.id} role={s.role} className={`flex items-start gap-3 ${s.bg} ${s.border} border rounded-xl p-4`}>

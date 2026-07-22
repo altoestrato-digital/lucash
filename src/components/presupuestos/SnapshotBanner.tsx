@@ -1,7 +1,7 @@
 "use client";
 
 import type { Presupuesto } from "@/types/presupuesto";
-import { formatBs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { AlertTriangle } from "lucide-react";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 
@@ -12,7 +12,7 @@ export default function SnapshotBanner({
   presupuesto: Presupuesto;
   onEmpezarNuevo: () => void;
 }) {
-  const { fromBs } = useMonedaActiva();
+  const { formatPair } = useMonedaActiva();
 
   const totalLimites = presupuesto.categorias
     .filter((s) => s.activo)
@@ -22,8 +22,9 @@ export default function SnapshotBanner({
   const gastos = totalLimites;
   const balance = ingresos - gastos;
 
-  const ingresoPair = fromBs(presupuesto.ingresoEsperado);
-  const gastoPair = fromBs(presupuesto.gastoMaximoEsperado);
+  const ingresoPair = formatPair(presupuesto.ingresoEsperado, usd(Number(presupuesto.ingresoEsperado) / 36));
+  const gastoPair = formatPair(presupuesto.gastoMaximoEsperado, usd(Number(presupuesto.gastoMaximoEsperado) / 36));
+  const balancePair = formatPair(bs(balance), usd(balance / 36));
 
   const periodoLabel = presupuesto.periodicidad === "mensual"
     ? "el mes"
@@ -42,7 +43,7 @@ export default function SnapshotBanner({
             Se cerró {periodoLabel}
           </p>
           <p className="text-sm text-muted mt-1">
-            {ingresoPair.primary} ingresos · {gastoPair.primary} gastos · {balance >= 0 ? "superávit" : "déficit"} de {formatBs(presupuesto.gastoMaximoEsperado)}
+            {ingresoPair.primary} ingresos · {gastoPair.primary} gastos · {balance >= 0 ? "superávit" : "déficit"} de {balancePair.primary}
           </p>
         </div>
       </div>

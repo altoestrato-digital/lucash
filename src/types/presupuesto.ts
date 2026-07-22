@@ -79,6 +79,7 @@ export interface CoberturaCategoria {
   limiteOriginal: Money;
   limiteMoneda: MonedaBudget;
   gastadoBs: Money;
+  gastadoUsd: Money;
   estado: EstadoCobertura;
   faltanBs: Money;
   excedidoBs: Money;
@@ -90,9 +91,12 @@ export interface AlertaCobertura {
   tipo: "sobregiro" | "basico" | "p2" | "p3" | "excedido" | "todo-cubierto";
   prioridad: number | null;
   montoBs: Money;
+  montoUsd: Money;
   monedaDefault: MonedaBudget;
   excedidoBs?: Money;
+  excedidoUsd?: Money;
   faltanBs?: Money;
+  faltanUsd?: Money;
   categoriaNombres: string[];
 }
 

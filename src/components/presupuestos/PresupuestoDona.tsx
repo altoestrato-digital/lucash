@@ -1,20 +1,20 @@
 "use client";
 
 import type { ResumenCobertura, Presupuesto } from "@/types/presupuesto";
-import { bs } from "@/lib/money";
+import { bs, usd } from "@/lib/money";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useMonedaActiva, type UseMonedaActivaReturn } from "@/hooks/useMonedaActiva";
 
 interface TooltipProps {
   active?: boolean;
   payload?: Array<{ name: string; value: number; payload: { label: string; color: string } }>;
-  fromBs: UseMonedaActivaReturn["fromBs"];
+  formatPair: UseMonedaActivaReturn["formatPair"];
 }
 
-function CustomTooltip({ active, payload, fromBs }: TooltipProps) {
+function CustomTooltip({ active, payload, formatPair }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const data = payload[0];
-  const pair = fromBs(bs(data.value));
+  const pair = formatPair(bs(data.value), usd(data.value / 36));
   return (
     <div className="rounded-lg glass px-3 py-2 text-xs shadow-lg">
       <p className="font-medium text-foreground">{data.payload.label}</p>
@@ -29,15 +29,15 @@ export default function PresupuestoDona(props: {
   presupuesto: Presupuesto;
 }) {
   const { cobertura } = props;
-  const { fromBs } = useMonedaActiva();
+  const { formatPair } = useMonedaActiva();
 
   const ingresoReal = Number(cobertura.ingresoRealBs);
   const gastoTotal = Number(cobertura.gastoTotalBs);
   const balance = Number(cobertura.balanceBs);
 
-  const balancePair = fromBs(cobertura.balanceBs);
-  const ingresoRealPair = fromBs(cobertura.ingresoRealBs);
-  const gastoTotalPair = fromBs(cobertura.gastoTotalBs);
+  const balancePair = formatPair(cobertura.balanceBs, cobertura.balanceUsd);
+  const ingresoRealPair = formatPair(cobertura.ingresoRealBs, cobertura.ingresoRealUsd);
+  const gastoTotalPair = formatPair(cobertura.gastoTotalBs, cobertura.gastoTotalUsd);
 
   const innerData = [
     { name: "Ingresos", value: Math.max(0, ingresoReal - gastoTotal), label: "Disponible", color: "#10B981" },
@@ -91,7 +91,7 @@ export default function PresupuestoDona(props: {
                 <Cell key={i} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip fromBs={fromBs} />} />
+            <Tooltip content={<CustomTooltip formatPair={formatPair} />} />
           </PieChart>
         </ResponsiveContainer>
       </div>

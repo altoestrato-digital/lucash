@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { CoberturaCategoria, CategoriaDetalle } from "@/types/presupuesto";
-import { formatBs, formatUsd } from "@/lib/money";
+import { formatBs, formatUsd, bs, usd } from "@/lib/money";
 import { useMonedaActiva } from "@/hooks/useMonedaActiva";
 import { ChevronRight } from "lucide-react";
 import { PRIORIDAD_BADGE_CLASSES } from "@/lib/presupuesto-styles";
@@ -16,7 +16,7 @@ const statusConfig: Record<string, { label: string; classes: string }> = {
 };
 
 export default function CategoriaCard({ cat, detalles }: { cat: CoberturaCategoria; detalles?: CategoriaDetalle[] }) {
-  const { moneda, fromBs } = useMonedaActiva();
+  const { moneda, formatPair } = useMonedaActiva();
   const [expanded, setExpanded] = useState(false);
   const hasDetalles = detalles && detalles.length > 0;
 
@@ -26,8 +26,10 @@ export default function CategoriaCard({ cat, detalles }: { cat: CoberturaCategor
 
   const status = statusConfig[cat.estado] || statusConfig["no-cubierto"];
 
-  const displayPair = fromBs(cat.limiteBs);
-  const gastadoPair = fromBs(cat.gastadoBs);
+  const limiteBsNum = Number(cat.limiteBs);
+  const limiteUsdNum = cat.limiteMoneda === "USD" ? Number(cat.limiteOriginal) : limiteBsNum / 36;
+  const displayPair = formatPair(bs(limiteBsNum), usd(limiteUsdNum));
+  const gastadoPair = formatPair(cat.gastadoBs, cat.gastadoUsd);
 
   return (
     <div
