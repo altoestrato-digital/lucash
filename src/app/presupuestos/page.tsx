@@ -87,6 +87,11 @@ export default function PresupuestosPage() {
     [detalleCategoria, listCategoriaDetalles, version]
   );
 
+  const currentDetalleCategoria = useMemo(
+    () => detalleCategoria ? presupuesto?.categorias.find(c => c.id === detalleCategoria.id) ?? detalleCategoria : null,
+    [detalleCategoria, presupuesto?.categorias]
+  );
+
   const handleSave = useCallback((data: Partial<typeof presupuesto>) => {
     if (data) updatePresupuesto(data);
     pushToast({ tone: "success", message: "Presupuesto actualizado" });
@@ -229,10 +234,10 @@ export default function PresupuestosPage() {
 
       <CategoriaDetalleEditor
         open={detalleModalOpen}
-        categoriaId={detalleCategoria?.id ?? ""}
-        categoriaNombre={detalleCategoria?.nombre ?? ""}
-        categoriaLimite={detalleCategoria?.limite ?? bs(0)}
-        categoriaLimiteMoneda={detalleCategoria?.limiteMoneda ?? "Bs"}
+        categoriaId={currentDetalleCategoria?.id ?? ""}
+        categoriaNombre={currentDetalleCategoria?.nombre ?? ""}
+        categoriaLimite={currentDetalleCategoria?.limite ?? bs(0)}
+        categoriaLimiteMoneda={currentDetalleCategoria?.limiteMoneda ?? "Bs"}
         monedaDefault={preferencias.moneda}
         gastoMaximoEsperado={Number(presupuesto?.gastoMaximoEsperado ?? 0)}
         gastoMaximoEsperadoMoneda={presupuesto?.gastoMaximoEsperadoMoneda ?? "Bs"}
