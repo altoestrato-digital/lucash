@@ -108,7 +108,33 @@ export function useHistorial(presupuesto: Presupuesto | null) {
     let ingresosUsd: Money = usd(0);
     let egresosUsd: Money = usd(0);
 
-    // Get all carteras for currency lookup
+    for (const tx of filtradas) {
+      if (tx.tipo === "ingreso") {
+        ingresosBs = sum(ingresosBs, tx.montoBs);
+        ingresosUsd = sum(ingresosUsd, tx.montoUsd);
+      } else {
+        egresosBs = sum(egresosBs, tx.montoBs);
+        egresosUsd = sum(egresosUsd, tx.montoUsd);
+      }
+    }
+
+    return {
+      ingresosBs,
+      egresosBs,
+      balanceBs: sub(ingresosBs, egresosBs),
+      ingresosUsd,
+      egresosUsd,
+      balanceUsd: sub(ingresosUsd, egresosUsd),
+      cantidad: filtradas.length,
+    };
+  }, [filtradas]);
+
+  const resumenPorMoneda = useMemo((): ResumenHistorial => {
+    let ingresosBs: Money = bs(0);
+    let egresosBs: Money = bs(0);
+    let ingresosUsd: Money = usd(0);
+    let egresosUsd: Money = usd(0);
+
     const allCarteras = carterasRepo.list();
     const carterasMap = new Map(allCarteras.map(c => [c.id, c]));
 
@@ -171,6 +197,7 @@ export function useHistorial(presupuesto: Presupuesto | null) {
   return {
     filtradas,
     resumen,
+    resumenPorMoneda,
     filtro,
     setPeriodo,
     setFiltroTipo,

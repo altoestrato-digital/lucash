@@ -22,6 +22,7 @@ export default function HistorialPage() {
   const {
     filtradas,
     resumen,
+    resumenPorMoneda,
     filtro,
     setPeriodo,
     setFiltroTipo,
@@ -65,12 +66,12 @@ export default function HistorialPage() {
       <HistorialResumen resumen={resumen} />
 
       <FlujoPorMoneda
-        ingresosBs={resumen.ingresosBs}
-        ingresosUsd={resumen.ingresosUsd}
-        egresosBs={resumen.egresosBs}
-        egresosUsd={resumen.egresosUsd}
-        balanceBs={resumen.balanceBs}
-        balanceUsd={resumen.balanceUsd}
+        ingresosBs={resumenPorMoneda.ingresosBs}
+        ingresosUsd={resumenPorMoneda.ingresosUsd}
+        egresosBs={resumenPorMoneda.egresosBs}
+        egresosUsd={resumenPorMoneda.egresosUsd}
+        balanceBs={resumenPorMoneda.balanceBs}
+        balanceUsd={resumenPorMoneda.balanceUsd}
       />
 
       <div className="flex items-center gap-2 px-4 py-2">
