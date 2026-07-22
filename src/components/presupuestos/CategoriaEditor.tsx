@@ -96,10 +96,10 @@ function CategoriaEditorForm({
   const excedenteBs = totalConEsteBs - gastoMaximoBs;
 
   const totalConEsteMoneda = gastoMaximoEsperadoMoneda === "USD"
-    ? Number(toBs(totalConEsteBs, "Bs", hoy) / toBs(1, "USD", hoy))
+    ? Math.round(Number(toBs(totalConEsteBs, "Bs", hoy) / toBs(1, "USD", hoy)) * 100) / 100
     : totalConEsteBs;
   const excedenteMoneda = gastoMaximoEsperadoMoneda === "USD"
-    ? Number(toBs(excedenteBs, "Bs", hoy) / toBs(1, "USD", hoy))
+    ? Math.round(Number(toBs(excedenteBs, "Bs", hoy) / toBs(1, "USD", hoy)) * 100) / 100
     : excedenteBs;
 
   const formatNum = (v: number, locale: "es-VE" | "en-US") =>

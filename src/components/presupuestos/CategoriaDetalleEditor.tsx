@@ -127,8 +127,11 @@ export default function CategoriaDetalleEditor({
     }
     if (excedenteMaximo > 0 && onUpdatePresupuesto) {
       const totalConCategoria = otrasCategoriasLimitesBs + Number(totalBsSave);
+      const gastoMaximoCalculado = gastoMaximoEsperadoMoneda === "USD" 
+        ? Math.round(Number(convertirAMoneyValues(totalConCategoria, "Bs", hoy).usd) * 100) / 100
+        : totalConCategoria;
       onUpdatePresupuesto({
-        gastoMaximoEsperado: gastoMaximoEsperadoMoneda === "USD" ? Number(convertirAMoneyValues(totalConCategoria, "Bs", hoy).usd) : totalConCategoria,
+        gastoMaximoEsperado: gastoMaximoCalculado,
         gastoMaximoEsperadoMoneda,
       });
     }
