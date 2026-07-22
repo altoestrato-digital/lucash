@@ -84,7 +84,6 @@ function agruparPorFecha(
 ): { fecha: string; label: string; ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number }[] {
   const desdeDate = new Date(desde + "T12:00:00");
   const hastaDate = new Date(hasta + "T12:00:00");
-  const totalDias = Math.max(1, Math.round((hastaDate.getTime() - desdeDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 
   const buckets = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number; order: number }>();
 
@@ -114,7 +113,7 @@ function agruparPorFecha(
       .map(([key, val]) => ({ fecha: key, label: key, ...val }));
   }
 
-  if (periodo === "año" || totalDias > 60) {
+  if (periodo === "año") {
     const startMonth = new Date(desdeDate.getFullYear(), desdeDate.getMonth(), 1);
     const endMonth = new Date(hastaDate.getFullYear(), hastaDate.getMonth(), 1);
     for (let m = new Date(startMonth); m <= endMonth; m.setMonth(m.getMonth() + 1)) {
@@ -135,40 +134,6 @@ function agruparPorFecha(
         const monthNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
         return { fecha: key, label: `${monthNames[parseInt(m, 10) - 1]} ${y}`, ...val };
       });
-  }
-
-  if (periodo === "mes" || totalDias > 14) {
-    const byWeek = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number; order: number }>();
-    const startDow = desdeDate.getDay();
-    const startMonday = addDays(desde as ISODate, startDow === 0 ? -6 : 1 - startDow);
-    const endDow = hastaDate.getDay();
-    const endSunday = addDays(hasta as ISODate, endDow === 0 ? 0 : 7 - endDow);
-    let currentMondayDate = new Date(startMonday + "T12:00:00");
-    const endMondayDate = new Date(endSunday + "T12:00:00");
-    let order = 0;
-    while (currentMondayDate <= endMondayDate) {
-      const mk = toIso(currentMondayDate);
-      byWeek.set(mk, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: order++ });
-      currentMondayDate = new Date(currentMondayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    }
-    for (const tx of txs) {
-      const txDate = tx.fecha.includes("T") ? tx.fecha.slice(0, 10) : tx.fecha;
-      const d = new Date(txDate + "T12:00:00");
-      const dayOfWeek = d.getDay();
-      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = addDays(txDate as ISODate, diffToMonday);
-      const weekKey = monday;
-      if (!byWeek.has(weekKey)) {
-        byWeek.set(weekKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: byWeek.size });
-      }
-      const b = byWeek.get(weekKey)!;
-      const [monto, montoBs, montoUsd] = getMonto(tx);
-      if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
-      else { b.egresos += monto; b.egresosBs += montoBs; b.egresosUsd += montoUsd; }
-    }
-    return Array.from(byWeek.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, val]) => ({ fecha: key, label: formatDateShort(key as ISODate), ...val }));
   }
 
   for (let d = new Date(desdeDate); d <= hastaDate; d.setDate(d.getDate() + 1)) {
