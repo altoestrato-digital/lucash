@@ -37,11 +37,31 @@ export const getDashboardData = (
   const egresosDelMes = txsDelMes.filter((t) => t.tipo === "egreso");
   const ingresosDelMes = txsDelMes.filter((t) => t.tipo === "ingreso");
 
-  const gastosMesBs = egresosDelMes.reduce((a, t) => sum(a, t.montoBs), bs(0));
-  const gastosMesUsd = egresosDelMes.reduce((a, t) => sum(a, t.montoUsd), usd(0));
+  // Create map for quick cartera lookup
+  const carterasMap = new Map(carteras.map(c => [c.id, c]));
 
-  const ingresoMesBs = ingresosDelMes.reduce((a, t) => sum(a, t.montoBs), bs(0));
-  const ingresoMesUsd = ingresosDelMes.reduce((a, t) => sum(a, t.montoUsd), usd(0));
+  // Sum only based on the cartera's currency, not the transaction's converted amounts
+  let gastosMesBs = bs(0);
+  let gastosMesUsd = usd(0);
+  for (const t of egresosDelMes) {
+    const cartera = carterasMap.get(t.carteraId);
+    if (cartera?.moneda === "Bs") {
+      gastosMesBs = sum(gastosMesBs, bs(t.montoOriginal));
+    } else if (cartera?.moneda === "USD" || cartera?.moneda === "USDT") {
+      gastosMesUsd = sum(gastosMesUsd, usd(t.montoOriginal));
+    }
+  }
+
+  let ingresoMesBs = bs(0);
+  let ingresoMesUsd = usd(0);
+  for (const t of ingresosDelMes) {
+    const cartera = carterasMap.get(t.carteraId);
+    if (cartera?.moneda === "Bs") {
+      ingresoMesBs = sum(ingresoMesBs, bs(t.montoOriginal));
+    } else if (cartera?.moneda === "USD" || cartera?.moneda === "USDT") {
+      ingresoMesUsd = sum(ingresoMesUsd, usd(t.montoOriginal));
+    }
+  }
 
   const balanceMesBs = bs(Number(ingresoMesBs) - Number(gastosMesBs));
   const balanceMesUsd = usd(Number(ingresoMesUsd) - Number(gastosMesUsd));
