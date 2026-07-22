@@ -2,9 +2,7 @@
 
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { Money } from "@/lib/money";
-import { useMonedaActiva } from "@/hooks/useMonedaActiva";
-import { useBcvLookup } from "@/hooks/useBcvLookup";
-import { toIso } from "@/lib/dates";
+import { formatBs, formatUsd } from "@/lib/money";
 
 interface BalancePeriodoCardProps {
   ingresoMesBs: Money;
@@ -23,24 +21,7 @@ export default function BalancePeriodoCard({
   balanceMesBs,
   balanceMesUsd,
 }: BalancePeriodoCardProps) {
-  const { formatPair, moneda } = useMonedaActiva();
-  const hoy = toIso(new Date());
-  const { valor: tasa } = useBcvLookup(hoy);
-
-  const tasaNum = Number(tasa);
-
   const balanceBsNum = Number(balanceMesBs);
-
-  const ingresoPair = formatPair(ingresoMesBs, ingresoMesUsd);
-  const gastoPair = formatPair(gastadoMesBs, gastadoMesUsd);
-  const balancePair = formatPair(balanceMesBs, balanceMesUsd);
-
-  const contraparte = (bsVal: number, usdVal: number) => {
-    if (moneda === "Bs") {
-      return tasaNum > 0 ? `≈ ${(bsVal / tasaNum).toFixed(2)} USD` : "—";
-    }
-    return tasaNum > 0 ? `≈ ${(usdVal * tasaNum).toLocaleString("es-VE")} Bs` : "—";
-  };
 
   return (
     <div className="px-4 lg:px-6">
@@ -54,56 +35,62 @@ export default function BalancePeriodoCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
               Ingresos
             </p>
-            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-              {ingresoPair.primary}
-            </p>
-            <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
-              {contraparte(Number(ingresoMesBs), Number(ingresoMesUsd))}
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {formatUsd(ingresoMesUsd)}
+              </p>
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {formatBs(ingresoMesBs)}
+              </p>
+            </div>
           </div>
 
-          <div className="text-center p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2">
               Egresos
             </p>
-            <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
-              {gastoPair.primary}
-            </p>
-            <p className="text-[10px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">
-              {contraparte(Number(gastadoMesBs), Number(gastadoMesUsd))}
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                {formatUsd(gastadoMesUsd)}
+              </p>
+              <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+                {formatBs(gastadoMesBs)}
+              </p>
+            </div>
           </div>
 
-          <div className={`text-center p-3 rounded-xl border ${
+          <div className={`p-3 rounded-xl border ${
             balanceBsNum >= 0
               ? "bg-blue-500/10 border-blue-500/20"
               : "bg-amber-500/10 border-amber-500/20"
           }`}>
-            <p className={`text-[10px] font-medium uppercase tracking-wider mb-1 ${
+            <p className={`text-[10px] font-medium uppercase tracking-wider mb-2 ${
               balanceBsNum >= 0
                 ? "text-blue-600 dark:text-blue-400"
                 : "text-amber-600 dark:text-amber-400"
             }`}>
               Balance
             </p>
-            <p className={`text-lg font-bold ${
-              balanceBsNum >= 0
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-amber-600 dark:text-amber-400"
-            }`}>
-              {balancePair.primary}
-            </p>
-            <p className={`text-[10px] mt-0.5 ${
-              balanceBsNum >= 0
-                ? "text-blue-600/70 dark:text-blue-400/70"
-                : "text-amber-600/70 dark:text-amber-400/70"
-            }`}>
-              {contraparte(Number(balanceMesBs), Number(balanceMesUsd))}
-            </p>
+            <div className="space-y-1">
+              <p className={`text-sm font-bold ${
+                balanceBsNum >= 0
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}>
+                {formatUsd(balanceMesUsd)}
+              </p>
+              <p className={`text-sm font-bold ${
+                balanceBsNum >= 0
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}>
+                {formatBs(balanceMesBs)}
+              </p>
+            </div>
           </div>
         </div>
       </div>
