@@ -115,11 +115,14 @@ function agruparPorFecha(
   }
 
   if (periodo === "año" || totalDias > 60) {
+    const startMonth = new Date(desdeDate.getFullYear(), desdeDate.getMonth(), 1);
+    const endMonth = new Date(hastaDate.getFullYear(), hastaDate.getMonth(), 1);
+    for (let m = new Date(startMonth); m <= endMonth; m.setMonth(m.getMonth() + 1)) {
+      const monthKey = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
+      buckets.set(monthKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: buckets.size });
+    }
     for (const tx of txs) {
       const monthKey = tx.fecha.slice(0, 7);
-      if (!buckets.has(monthKey)) {
-        buckets.set(monthKey, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: buckets.size });
-      }
       const b = buckets.get(monthKey)!;
       const [monto, montoBs, montoUsd] = getMonto(tx);
       if (tx.tipo === "ingreso") { b.ingresos += monto; b.ingresosBs += montoBs; b.ingresosUsd += montoUsd; }
@@ -136,6 +139,18 @@ function agruparPorFecha(
 
   if (periodo === "mes" || totalDias > 14) {
     const byWeek = new Map<string, { ingresos: number; egresos: number; ingresosBs: number; egresosBs: number; ingresosUsd: number; egresosUsd: number; order: number }>();
+    const startDow = desdeDate.getDay();
+    const startMonday = addDays(desde as ISODate, startDow === 0 ? -6 : 1 - startDow);
+    const endDow = hastaDate.getDay();
+    const endSunday = addDays(hasta as ISODate, endDow === 0 ? 0 : 7 - endDow);
+    let currentMondayDate = new Date(startMonday + "T12:00:00");
+    const endMondayDate = new Date(endSunday + "T12:00:00");
+    let order = 0;
+    while (currentMondayDate <= endMondayDate) {
+      const mk = toIso(currentMondayDate);
+      byWeek.set(mk, { ingresos: 0, egresos: 0, ingresosBs: 0, egresosBs: 0, ingresosUsd: 0, egresosUsd: 0, order: order++ });
+      currentMondayDate = new Date(currentMondayDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
     for (const tx of txs) {
       const txDate = tx.fecha.includes("T") ? tx.fecha.slice(0, 10) : tx.fecha;
       const d = new Date(txDate + "T12:00:00");
