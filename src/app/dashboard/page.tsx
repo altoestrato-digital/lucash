@@ -17,7 +17,6 @@ import type { Transaccion } from "@/types/transaccion";
 import type { EspacioTrabajo } from "@/types/espacio-trabajo";
 import DashboardHero from "@/components/dashboard/DashboardHero";
 import DashboardKpis from "@/components/dashboard/DashboardKpis";
-import BalancePeriodoCard from "@/components/dashboard/BalancePeriodoCard";
 import SpendingChart from "@/components/dashboard/SpendingChart";
 import BudgetDonut from "@/components/dashboard/BudgetDonut";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
@@ -125,17 +124,6 @@ export default function DashboardPage() {
           onDisponibleClick={() => router.push("/carteras")}
           onPresupuestoClick={() => router.push("/presupuestos")}
           onGastadoClick={() => router.push("/historial")}
-        />
-      </div>
-
-      <div className="mt-6">
-        <BalancePeriodoCard
-          ingresoMesBs={dashboardData.ingresoMesBs}
-          ingresoMesUsd={dashboardData.ingresoMesUsd}
-          gastadoMesBs={dashboardData.gastadoMesBs}
-          gastadoMesUsd={dashboardData.gastadoMesUsd}
-          balanceMesBs={dashboardData.balanceMesBs}
-          balanceMesUsd={dashboardData.balanceMesUsd}
         />
       </div>
 

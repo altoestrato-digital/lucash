@@ -8,6 +8,7 @@ import { nukeIDB } from "@/lib/db/client";
 import HistorialHeader from "@/components/historial/HistorialHeader";
 import PeriodoSelector from "@/components/historial/PeriodoSelector";
 import HistorialResumen from "@/components/historial/HistorialResumen";
+import FlujoPorMoneda from "@/components/historial/FlujoPorMoneda";
 import HistorialFilters from "@/components/historial/HistorialFilters";
 import ActiveFilterChips from "@/components/historial/ActiveFilterChips";
 import TransaccionList from "@/components/historial/TransaccionList";
@@ -62,6 +63,15 @@ export default function HistorialPage() {
       <PeriodoSelector value={periodoKey} onChange={setPeriodo} />
 
       <HistorialResumen resumen={resumen} />
+
+      <FlujoPorMoneda
+        ingresosBs={resumen.ingresosBs}
+        ingresosUsd={resumen.ingresosUsd}
+        egresosBs={resumen.egresosBs}
+        egresosUsd={resumen.egresosUsd}
+        balanceBs={resumen.balanceBs}
+        balanceUsd={resumen.balanceUsd}
+      />
 
       <div className="flex items-center gap-2 px-4 py-2">
         <button
