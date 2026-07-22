@@ -36,6 +36,7 @@ export default function CarterasPage() {
   const [metaEditorOpen, setMetaEditorOpen] = useState(false);
   const [editingMeta, setEditingMeta] = useState<MetaCartera | undefined>();
   const [metaMoneda, setMetaMoneda] = useState("Bs");
+  const [metaEditorKey, setMetaEditorKey] = useState(0);
   const [conversionOpen, setConversionOpen] = useState(false);
   const [transferenciaOpen, setTransferenciaOpen] = useState(false);
   const [carteraTransferenciaOrigen, setCarteraTransferenciaOrigen] = useState<Cartera | undefined>();
@@ -161,13 +162,13 @@ export default function CarterasPage() {
         onEdit={() => { setEditingCartera(drawerCartera); setEditorOpen(true); setDrawerCartera(undefined); }}
         onConvertir={() => setConversionOpen(true)}
         onTransferir={() => { setCarteraTransferenciaOrigen(drawerCartera); setTransferenciaOpen(true); setDrawerCartera(undefined); }}
-        onEditMeta={(meta) => { setEditingMeta(meta); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorOpen(true); }}
-        onAddMeta={() => { setEditingMeta(undefined); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorOpen(true); }}
+        onEditMeta={(meta) => { setEditingMeta(meta); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorKey(k => k + 1); setMetaEditorOpen(true); }}
+        onAddMeta={() => { setEditingMeta(undefined); setMetaMoneda(drawerCartera?.moneda ?? "Bs"); setMetaEditorKey(k => k + 1); setMetaEditorOpen(true); }}
         carteras={carteras}
       />
 
       <MetaEditor
-        key="meta-editor"
+        key={`meta-editor-${metaEditorKey}`}
         open={metaEditorOpen}
         meta={editingMeta}
         moneda={metaMoneda}
