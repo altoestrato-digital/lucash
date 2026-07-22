@@ -90,11 +90,11 @@ export default function TransaccionDrawer({ open, transaccion, onClose }: Transa
         <div className="mb-4 flex gap-3">
           <div className="flex-1 rounded-xl bg-surface-elevated border border-border p-3">
             <p className="text-xs text-muted">Tasa oficial</p>
-            <p className="text-sm text-foreground">{tx.tasaOficial}</p>
+            <p className="text-sm text-foreground">{tx.tasaOficial.toFixed(2)}</p>
           </div>
           <div className="flex-1 rounded-xl bg-surface-elevated border border-border p-3">
             <p className="text-xs text-muted">Tasa paralela</p>
-            <p className="text-sm text-foreground">{tx.tasaParalelo}</p>
+            <p className="text-sm text-foreground">{tx.tasaParalelo.toFixed(2)}</p>
           </div>
         </div>
 
