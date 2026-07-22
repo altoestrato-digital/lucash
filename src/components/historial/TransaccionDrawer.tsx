@@ -1,7 +1,7 @@
 "use client";
 
 import type { Transaccion } from "@/types/transaccion";
-import { formatBs, formatUsd } from "@/lib/money";
+import { formatBs, formatUsd, bs, usd } from "@/lib/money";
 import { formatDateTime } from "@/lib/dates";
 import { X, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
@@ -69,7 +69,7 @@ export default function TransaccionDrawer({ open, transaccion, onClose }: Transa
           <div className="flex-1 rounded-xl bg-surface-elevated border border-border p-3">
             <p className="text-xs text-muted">Monto original</p>
             <p className={`text-lg font-bold ${isIngreso ? "text-emerald-500" : "text-rose-500"}`}>
-              {tx.montoOriginal} {tx.monedaOriginal}
+              {tx.monedaOriginal === "USD" ? formatUsd(usd(tx.montoOriginal)) : formatBs(bs(tx.montoOriginal))}
             </p>
           </div>
         </div>
@@ -90,18 +90,21 @@ export default function TransaccionDrawer({ open, transaccion, onClose }: Transa
         <div className="mb-4 flex gap-3">
           <div className="flex-1 rounded-xl bg-surface-elevated border border-border p-3">
             <p className="text-xs text-muted">Tasa oficial</p>
-            <p className="text-sm text-foreground">{tx.tasaOficial.toFixed(2)}</p>
+            <p className="text-sm text-foreground">{formatBs(bs(tx.tasaOficial))}</p>
           </div>
           <div className="flex-1 rounded-xl bg-surface-elevated border border-border p-3">
             <p className="text-xs text-muted">Tasa paralela</p>
-            <p className="text-sm text-foreground">{tx.tasaParalelo.toFixed(2)}</p>
+            <p className="text-sm text-foreground">{formatBs(bs(tx.tasaParalelo))}</p>
           </div>
         </div>
 
         <div className="mb-4 rounded-xl bg-surface-elevated border border-border p-3">
           <p className="text-xs text-muted">Saldo cartera</p>
           <p className="text-sm text-foreground">
-            {tx.saldoPrevio} → {tx.saldoPosterior} ({tx.monedaOriginal})
+            {tx.monedaOriginal === "USD" 
+              ? `${formatUsd(usd(tx.saldoPrevio))} → ${formatUsd(usd(tx.saldoPosterior))}`
+              : `${formatBs(bs(tx.saldoPrevio))} → ${formatBs(bs(tx.saldoPosterior))}`
+            }
           </p>
         </div>
 
