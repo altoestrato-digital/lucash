@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Categoria, MonedaBudget } from "@/types/presupuesto";
 import type { HexColor } from "@/types/hex-color";
-import { bs, usd } from "@/lib/money";
+import { bs } from "@/lib/money";
 import { toBs } from "@/lib/conversion";
 import { toIso } from "@/lib/dates";
 import { X } from "lucide-react";
@@ -111,7 +111,7 @@ function CategoriaEditorForm({
     if (!nombre.trim() || !limite) return;
     if (excedeMaximo && onUpdatePresupuesto) {
       onUpdatePresupuesto({
-        gastoMaximoEsperado: gastoMaximoEsperadoMoneda === "USD" ? usd(totalConEsteMoneda) : bs(totalConEsteBs),
+        gastoMaximoEsperado: gastoMaximoEsperadoMoneda === "USD" ? totalConEsteMoneda : totalConEsteBs,
         gastoMaximoEsperadoMoneda,
       });
     }
