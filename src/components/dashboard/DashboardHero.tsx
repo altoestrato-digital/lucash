@@ -27,7 +27,7 @@ export default function DashboardHero({ nombre, avatar }: DashboardHeroProps) {
       <div className="absolute top-1/2 right-1/4 h-40 w-40 rounded-full bg-white/3" />
 
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-center gap-3 mt-4">
           {avatar ? (
             <div className="h-10 w-10 overflow-hidden rounded-2xl bg-white/15 backdrop-blur-sm">
               <img src={avatar} alt="Avatar" className="h-full w-full object-cover" />
@@ -41,16 +41,18 @@ export default function DashboardHero({ nombre, avatar }: DashboardHeroProps) {
             {saludo}
           </h1>
         </div>
-        <Link
-          href="/perfil"
-          className={`inline-flex items-center gap-1 text-sm text-emerald-200 hover:text-white transition-colors ${nombre ? "invisible" : ""}`}
-        >
-          Completá tu perfil <ArrowRight className="h-3 w-3" />
-        </Link>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-2">
           <p className="text-emerald-100/80 text-sm">Aquí está tu resumen financiero</p>
           <p className="text-sm text-emerald-100">{fecha}</p>
         </div>
+        {!nombre && (
+          <Link
+            href="/perfil"
+            className="inline-flex items-center gap-1 mt-2 text-sm text-emerald-200 hover:text-white transition-colors"
+          >
+            Completá tu perfil <ArrowRight className="h-3 w-3" />
+          </Link>
+        )}
       </div>
     </div>
   );
