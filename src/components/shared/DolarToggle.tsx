@@ -60,7 +60,7 @@ export default function DolarToggle({
       type="button"
       onClick={handleToggle}
       aria-label={ariaLabel}
-      className={`group flex flex-col items-end gap-0.5 rounded-xl bg-white/15 backdrop-blur-sm px-3 py-1.5 text-[11px] font-medium text-white hover:bg-white/25 transition-colors ${className}`}
+      className={`group flex items-center gap-2 rounded-full bg-surface/80 backdrop-blur-xl border border-border px-3 py-1.5 text-[11px] font-medium text-foreground active:bg-surface-elevated transition-all touch-manipulation ${className}`}
     >
       <span className="flex items-center gap-1.5">
         {fuenteLabel}
@@ -68,13 +68,13 @@ export default function DolarToggle({
           role="button"
           tabIndex={-1}
           onClick={handleRefresh}
-          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded hover:bg-white/20"
+          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded hover:bg-surface"
           aria-label="Actualizar tasa"
         >
           <RefreshCw className={`h-2.5 w-2.5 ${loading ? "animate-spin" : ""}`} />
         </span>
       </span>
-      <span className="font-mono text-[10px] text-emerald-100/90">{tasaLabel}</span>
+      <span className="font-mono text-[10px] text-muted">{tasaLabel}</span>
     </button>
   );
 }

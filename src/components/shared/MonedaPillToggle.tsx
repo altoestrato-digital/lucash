@@ -20,7 +20,7 @@ export default function MonedaPillToggle({
       type="button"
       onClick={onToggle}
       aria-label={ariaLabel}
-      className={`rounded-xl bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-white hover:bg-white/25 transition-colors ${className}`}
+      className={`rounded-full bg-surface/80 backdrop-blur-xl border border-border px-3 py-1.5 text-xs font-medium text-foreground active:bg-surface-elevated transition-all touch-manipulation ${className}`}
     >
       {moneda}
     </button>
