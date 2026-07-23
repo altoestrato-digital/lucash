@@ -23,6 +23,7 @@ const mobileItems: MobileItem[] = [
   { type: "fab" },
   { type: "link", ...links[2] },
   { type: "link", ...links[3] },
+  { type: "link", href: "/perfil", label: "Perfil", icon: Settings },
 ];
 
 export function NavBar() {

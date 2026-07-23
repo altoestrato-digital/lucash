@@ -17,7 +17,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <DolarApiBootstrap />
       <ToastRenderer />
       {!hideNav && <FloatingToggles />}
-      <main className="min-h-screen w-full pb-20 lg:pb-6 lg:pl-20">
+      <main className="min-h-screen w-full overflow-x-hidden pb-20 lg:pb-6 lg:pl-20">
         {children}
       </main>
       {!hideNav && <NavBar />}
