@@ -35,12 +35,12 @@ function SegmentedControl<T extends string>({
             <button
               onClick={() => !disabled && onChange(opt.value)}
               disabled={!!disabled}
-              className={`w-full px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg ${
+              className={`w-full px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg touch-manipulation ${
                 value === opt.value
                   ? "bg-primary text-white shadow-sm"
                   : disabled
                     ? "text-muted cursor-not-allowed"
-                    : "text-muted hover:text-foreground"
+                    : "text-muted active:text-foreground"
               }`}
             >
               {opt.label}

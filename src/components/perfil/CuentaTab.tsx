@@ -92,14 +92,14 @@ export default function CuentaTab({ perfil, onSave, onAvatarChange, onContrasena
         <div className="flex flex-col gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
+            className="text-sm text-primary active:text-primary-dark font-medium transition-colors touch-manipulation"
           >
             Cambiar foto
           </button>
           {avatarFile && (
             <button
               onClick={handleRemovePhoto}
-              className="text-sm text-danger hover:text-danger/80 font-medium transition-colors"
+              className="text-sm text-danger active:text-danger/80 font-medium transition-colors touch-manipulation"
             >
               Quitar foto
             </button>
@@ -191,7 +191,7 @@ export default function CuentaTab({ perfil, onSave, onAvatarChange, onContrasena
 
       <button
         onClick={handleSave}
-        className="sticky bottom-4 w-full py-3 rounded-xl gradient-primary text-white font-semibold text-sm shadow-lg glow-primary hover:scale-[1.01] active:scale-[0.98] transition-all"
+        className="sticky bottom-4 w-full py-3 rounded-xl gradient-primary text-white font-semibold text-sm shadow-lg glow-primary active:scale-[0.98] transition-all touch-manipulation"
       >
         Guardar
       </button>

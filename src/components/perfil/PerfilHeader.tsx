@@ -10,7 +10,7 @@ interface PerfilHeaderProps {
 
 export default function PerfilHeader({ activeTab, onTabChange }: PerfilHeaderProps) {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 pt-12 pb-0 px-6">
+    <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 pt-12 pb-0 px-6">
       <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5" />
       <div className="absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-white/5" />
       <div className="relative z-10">
