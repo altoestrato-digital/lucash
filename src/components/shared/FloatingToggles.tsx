@@ -117,9 +117,11 @@ export default function FloatingToggles() {
         </button>
       </div>
 
-      {/* Bottom-right: currency toggles above nav */}
-      <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2 lg:hidden">
+      {/* Bottom-left: tasa de cambio, Bottom-right: moneda toggle */}
+      <div className="fixed bottom-20 left-4 z-50 lg:hidden">
         <DolarToggle />
+      </div>
+      <div className="fixed bottom-20 right-4 z-50 lg:hidden">
         <MonedaToggle />
       </div>
     </>
