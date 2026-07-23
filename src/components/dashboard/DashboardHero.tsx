@@ -20,7 +20,7 @@ export default function DashboardHero({ nombre, avatar }: DashboardHeroProps) {
   const fecha = now.toLocaleDateString("es-VE", { weekday: "long", month: "long", day: "numeric" });
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 pt-6 pb-12 px-6">
+    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 pt-16 pb-12 px-6">
       {/* Decorative circles */}
       <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5" />
       <div className="absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-white/5" />
