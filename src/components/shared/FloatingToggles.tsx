@@ -105,23 +105,25 @@ export default function FloatingToggles() {
 
   return (
     <>
-      {/* Top row: workspace left, profile right */}
-      <div className="fixed top-4 left-4 right-4 z-50 flex items-start justify-between lg:hidden">
+      {/* Top row: workspace left, profile right (mobile only) */}
+      <div className="fixed top-4 left-4 right-4 z-50 flex items-start justify-between lg:justify-start lg:left-[84px] lg:right-auto">
         <WorkspaceSelector />
         <button
           onClick={() => router.push("/perfil")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 backdrop-blur-xl border border-border text-muted active:text-foreground transition-all touch-manipulation"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface/80 backdrop-blur-xl border border-border text-muted active:text-foreground transition-all touch-manipulation lg:hidden"
           aria-label="Perfil"
         >
           <Settings className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Bottom-left: tasa de cambio, Bottom-right: moneda toggle */}
-      <div className="fixed bottom-20 left-4 z-50 lg:hidden">
+      {/* Bottom-left: tasa de cambio */}
+      <div className="fixed bottom-20 left-4 z-50 lg:bottom-6 lg:left-[84px]">
         <DolarToggle />
       </div>
-      <div className="fixed bottom-20 right-4 z-50 lg:hidden">
+
+      {/* Bottom-right: moneda toggle */}
+      <div className="fixed bottom-20 right-4 z-50 lg:bottom-6 lg:right-6">
         <MonedaToggle />
       </div>
     </>
