@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHero nombre={perfil.nombre} />
+      <DashboardHero nombre={perfil.nombre} avatar={perfil.avatar} />
 
       <div className="relative -mt-8 z-10">
         <DashboardKpis
