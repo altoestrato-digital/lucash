@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: "/lucash",
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || undefined,
   reactCompiler: true,
 };
 
