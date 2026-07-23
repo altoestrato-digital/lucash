@@ -3,7 +3,7 @@
 import initSqlJs, { type Database, type SqlJsStatic, type BindParams } from "sql.js";
 import { SCHEMA_SQL } from "./schema";
 
-const WASM_URL = (process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/sql-wasm.wasm";
+const WASM_URL = "/sql-wasm.wasm";
 
 const IDB_NAME = "lucash-sqlite";
 const IDB_STORE = "files";

@@ -31,8 +31,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
-        env:
-          NEXT_PUBLIC_BASE_PATH: /lucash
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
